@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BaseCharacter.h"
-#include "WorldCamera.h"
 #include "GameDirector.generated.h"
 
 UCLASS()
@@ -27,6 +26,15 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpawnPoints")
+		AActor* aa_pPlayer1Spawn = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpawnPoints")
+		AActor* aa_pPlayer2Spawn = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerMovement")
+		APlayerSpace* pPlayerSpace = nullptr;
 
 		TArray<ABaseCharacter*> aa_Characters;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameSetup")

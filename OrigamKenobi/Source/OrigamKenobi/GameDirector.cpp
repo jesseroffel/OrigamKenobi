@@ -4,6 +4,8 @@
 #include "BaseCharacter.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
+#include "WorldCamera.h"
+#include "CharacterController.h"
 
 
 // Sets default values
@@ -11,40 +13,54 @@ AGameDirector::AGameDirector()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 // Called when the game starts or when spawned
 void AGameDirector::BeginPlay()
 {
 	Super::BeginPlay();
-	this->CreatePlayers();
+	if (aa_pPlayer1Spawn && aa_pPlayer2Spawn)
+	{
+		ACharacterController* PC2 = GetWorld()->SpawnActor<ACharacterController>(ACharacterController::StaticClass());
+		this->CreatePlayers();
+	}
 }
 
 void AGameDirector::CreatePlayers()
 {
-	FVector location(50.f, 50.0f, 0);
 	if (i_PlayerCount > 0 && i_PlayerCount < 5)
 	{
 		TArray<AActor*> FoundActors;
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWorldCamera::StaticClass(), FoundActors);
-		ABaseCharacter* basechar = (ABaseCharacter*)GetWorld()->SpawnActor<ABaseCharacter>(ABaseCharacter::StaticClass(), location, FRotator::ZeroRotator);
 		if (FoundActors.Num() > 0)
 		{
-			for (int i = 0; i < i_PlayerCount; i++)
+			//Player 1
+			ABaseCharacter* P1 = GetWorld()->SpawnActor<ABaseCharacter>(ABaseCharacter::StaticClass(), aa_pPlayer1Spawn->GetActorLocation(), FRotator::ZeroRotator);
+			if (P1)
 			{
-				ABaseCharacter* basechar = (ABaseCharacter*) GetWorld()->SpawnActor<ABaseCharacter>(ABaseCharacter::StaticClass(), location, FRotator::ZeroRotator);
-				if (basechar)
+				P1->BindPlayer(0);
+				P1->SetControllerIndex(0, FoundActors[0]);
+				if (pPlayerSpace != nullptr)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Actor spawned successfully"));
+					P1->SetPlayerMovementController(pPlayerSpace);
+					P1->SignMyselfUpForMovement();
 				}
-				
-				//basechar->SetControllerIndex(i_PlayerIndexCount, FoundActors[0]);
-				//aa_Characters.Add(basechar);
 
-				//i_PlayerIndexCount++;
 			}
-
+			else { UE_LOG(LogTemp, Warning, TEXT("Actor could not be spawned!")); }
+			//Player 2
+			ABaseCharacter* P2 = GetWorld()->SpawnActor<ABaseCharacter>(ABaseCharacter::StaticClass(), aa_pPlayer2Spawn->GetActorLocation(), FRotator::ZeroRotator);
+			if (P2)
+			{
+				P2->BindPlayer(1);
+				P2->SetControllerIndex(1, FoundActors[0]);
+				if (pPlayerSpace != nullptr)
+				{
+					P2->SetPlayerMovementController(pPlayerSpace);
+					P2->SignMyselfUpForMovement();
+				}
+			}
+			else { UE_LOG(LogTemp, Warning, TEXT("Actor could not be spawned!")); }
 		}
 	} 
 	

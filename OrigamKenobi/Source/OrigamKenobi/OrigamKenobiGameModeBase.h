@@ -12,9 +12,12 @@
 UCLASS()
 class ORIGAMKENOBI_API AOrigamKenobiGameModeBase : public AGameModeBase
 {
+public:
+
 	GENERATED_BODY()
 	
-	
+	//Constructor
+	AOrigamKenobiGameModeBase();
 	
 	
 };

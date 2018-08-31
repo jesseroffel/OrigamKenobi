@@ -6,6 +6,8 @@
 #include "GameFramework/Pawn.h"
 #include "BaseCharacter.generated.h"
 
+class APlayerSpace;
+
 UCLASS()
 class ORIGAMKENOBI_API ABaseCharacter : public APawn
 {
@@ -20,6 +22,12 @@ protected:
 	virtual void BeginPlay() override;
 
 	APlayerController* ThisPlayerController = nullptr;
+	// Direction = LEFT == TRUE, RIGHT == FALSE
+	bool b_MirroredDirection = false;
+
+	APlayerSpace* pPlayerSpace = nullptr;
+
+	int iPlayerNumber = 0;
 
 public:	
 	// Called every frame
@@ -29,6 +37,12 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void SetControllerIndex(int a_iPlayerIndex, AActor* a_pWorldCamera);
+
+	void SetPlayerMovementController(APlayerSpace* a_pPlayerSpace);
+
+	void BindPlayer(int a_iIndex);
+
+	void SignMyselfUpForMovement();
 
 	void KeyUp();
 

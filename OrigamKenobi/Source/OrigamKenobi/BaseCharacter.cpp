@@ -2,9 +2,13 @@
 
 #include "BaseCharacter.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "ConstructorHelpers.h"
+#include "Engine/World.h"
+#include "PlayerSpace.h"
+#include "Engine/Engine.h"
 
 
 // Sets default values
@@ -34,7 +38,6 @@ ABaseCharacter::ABaseCharacter()
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
@@ -63,7 +66,40 @@ void ABaseCharacter::SetControllerIndex(int a_iPlayerIndex, AActor* a_pWorldCame
 	ThisPlayerController = UGameplayStatics::GetPlayerController(this, a_iPlayerIndex);
 	if (ThisPlayerController)
 	{
+		ThisPlayerController->EnableInput(ThisPlayerController);
+		ThisPlayerController->UnPossess();
+		ThisPlayerController->Possess(this);
 		ThisPlayerController->SetViewTarget(a_pWorldCamera);
+	}
+}
+
+void ABaseCharacter::SetPlayerMovementController(APlayerSpace* a_pPlayerSpace)
+{
+	pPlayerSpace = a_pPlayerSpace;
+}
+
+void ABaseCharacter::BindPlayer(int a_iIndex)
+{
+	//Take control of the default player
+
+	switch(a_iIndex)
+	{
+	case 0:
+		AutoPossessPlayer = EAutoReceiveInput::Player0;
+		break;
+	case 1:
+		AutoPossessPlayer = EAutoReceiveInput::Player1;
+		break;
+	default:
+		break;
+	}
+}
+
+void ABaseCharacter::SignMyselfUpForMovement()
+{
+	if (pPlayerSpace != nullptr)
+	{
+		iPlayerNumber = pPlayerSpace->AddPlayerEntity(this);
 	}
 }
 
@@ -77,10 +113,46 @@ void ABaseCharacter::KeyDown()
 
 void ABaseCharacter::KeyLeft()
 {
+	bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, false);
+	if (check)
+	{
+		pPlayerSpace->MovePlayerHorizontal(this, false, 1);
+		FVector loc = this->GetActorLocation();
+		loc.X -= 100.0f;
+		//SetActorLocation(loc);
+		FLatentActionInfo LatentInfo;
+		LatentInfo.CallbackTarget = this;
+		UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), loc, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
+
+		int P1 = pPlayerSpace->getP1Block();
+		int P2 = pPlayerSpace->getP2Block();
+		FString text = FString::FromInt(P1);
+		text += " ";
+		text += FString::FromInt(P2);
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
+	}
 }
 
 void ABaseCharacter::KeyRight()
 {
+	bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, true);
+	if (check)
+	{
+		pPlayerSpace->MovePlayerHorizontal(this, true, 1);
+		FVector loc = this->GetActorLocation();
+		loc.X += 100.0f;
+		//SetActorLocation(loc);
+		FLatentActionInfo LatentInfo;
+		LatentInfo.CallbackTarget = this;
+		UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), loc, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
+
+		int P1 = pPlayerSpace->getP1Block();
+		int P2 = pPlayerSpace->getP2Block();
+		FString text = FString::FromInt(P1);
+		text += " ";
+		text += FString::FromInt(P2);
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
+	}
 }
 
 void ABaseCharacter::Attack()
