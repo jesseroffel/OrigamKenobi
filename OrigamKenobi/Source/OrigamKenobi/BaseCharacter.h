@@ -63,7 +63,7 @@ public:
 
 	UStaticMeshComponent* SphereVisual = nullptr;
 	UStaticMeshComponent* SM_Yoga = nullptr;
-	UStaticMeshComponent* SM_DarthInvader = nullptr;
+	UStaticMeshComponent* SM_DarkInvader = nullptr;
 
 	UBoxComponent* CharacterHitBox = nullptr;
 	UBoxComponent* SwordHitBox = nullptr;

@@ -62,7 +62,7 @@ ABaseCharacter::ABaseCharacter()
 	//YogaMaster
 	SM_Yoga = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualRepresentationYoda"));
 	SM_Yoga->SetupAttachment(RootComponent);
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_YogaMasterAsset(TEXT("/Game/Models/SM_Yoda"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_YogaMasterAsset(TEXT("/Game/Models/SK_MasterYoga"));
 	if (SM_YogaMasterAsset.Succeeded())
 	{
 		SM_Yoga->SetStaticMesh(SM_YogaMasterAsset.Object);
@@ -70,16 +70,16 @@ ABaseCharacter::ABaseCharacter()
 		SM_Yoga->SetWorldScale3D(FVector(0.15f));
 	}
 
-	//DarthInvader
-	SM_DarthInvader = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualRepresentationDarthInvader"));
-	SM_DarthInvader->SetupAttachment(RootComponent);
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_DarthInvaderAsset(TEXT("/Game/Models/SM_DarthVader"));
-	if (SM_DarthInvaderAsset.Succeeded())
+	//DarkInvader
+	SM_DarkInvader = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualRepresentationDarkInvader"));
+	SM_DarkInvader->SetupAttachment(RootComponent);
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> DarkInvaderAsset(TEXT("/Game/Models/SK_DarkInvader"));
+	if (DarkInvaderAsset.Succeeded())
 	{
-		SM_DarthInvader->SetStaticMesh(SM_DarthInvaderAsset.Object);
-		SM_DarthInvader->SetRelativeLocation(FVector(0.0f, 0.0f, -40.0f));
-		SM_DarthInvader->SetWorldScale3D(FVector(0.15f));
-		//SM_DarthInvader->bVisible = false;
+		SM_DarkInvader->SetStaticMesh(DarkInvaderAsset.Object);
+		SM_DarkInvader->SetRelativeLocation(FVector(0.0f, 0.0f, -35.0f));
+		SM_DarkInvader->SetWorldScale3D(FVector(0.15f));
+		//SM_DarkInvader->bVisible = false;
 	}
 
 	PrimaryActorTick.bCanEverTick = true;
@@ -91,12 +91,14 @@ void ABaseCharacter::OnSwordBeginOverlap(UPrimitiveComponent* OverlappedComponen
 {
 	if (OtherActor && (OtherActor != this) && OtherComp)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "ONOVERLAP");
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, OverlappedComponent->GetName());
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, OtherActor->GetName());
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, OtherComp->GetName());
+		ABaseCharacter* OtherCharacter = Cast<ABaseCharacter>(OtherActor);
+		if (OtherComp->GetName() == "CharacterHitbox" && OtherCharacter->GetAttackable())
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, OverlappedComponent->GetName());
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, OtherActor->GetName());
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, OtherComp->GetName());
+		}
 	}
-
 }
 
 // Called when the game starts or when spawned
@@ -397,8 +399,8 @@ void ABaseCharacter::SetModelVisibleYoga()
 {
 	SphereVisual->ToggleVisibility();
 	SphereVisual->GetAttachmentRoot()->SetVisibility(false, false);
-	SM_DarthInvader->ToggleVisibility();
-	SM_DarthInvader->GetAttachmentRoot()->SetVisibility(false, false);
+	SM_DarkInvader->ToggleVisibility();
+	SM_DarkInvader->GetAttachmentRoot()->SetVisibility(false, false);
 	vCharacterLocation = this->GetActorLocation();
 }
 
