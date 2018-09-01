@@ -9,6 +9,7 @@
 #include "Engine/World.h"
 #include "PlayerSpace.h"
 #include "Engine/Engine.h"
+#include "Components/BoxComponent.h"
 
 
 // Sets default values
@@ -22,6 +23,31 @@ ABaseCharacter::ABaseCharacter()
 	SphereComponent->InitSphereRadius(40.0f);
 	SphereComponent->SetCollisionProfileName(TEXT("Pawn"));
 
+	//HIT BOXES
+	CharacterHitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CharacterHitbox"));
+	CharacterHitBox->SetupAttachment(RootComponent);
+	CharacterHitBox->SetBoxExtent(FVector(16.0f, 32.0f, 32.0f));
+	CharacterHitBox->SetHiddenInGame(false);
+	CharacterHitBox->BodyInstance.SetCollisionProfileName("OverlapAll");
+	CharacterHitBox->bGenerateOverlapEvents = true;
+	//CharacterHitBox->OnComponentBeginOverlap.AddDynamic(this, &ABaseCharacter::OnCharacterOverlap);
+
+	//CharacterHitBox->OnComponentBeginOverlap.AddDynamic(this, &ABaseCharacter::OverLapFunction);
+
+	SwordHitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SwordHitBox"));
+	SwordHitBox->SetupAttachment(RootComponent);
+	SwordHitBox->SetBoxExtent(FVector(16.0f, 32.0f, 8.0f));
+	SwordHitBox->SetRelativeLocation(FVector(0.0f, 20.0f, 0.0f));
+	SwordHitBox->OnComponentBeginOverlap.AddDynamic(this, &ABaseCharacter::OnSwordBeginOverlap);
+	SwordHitBox->bGenerateOverlapEvents = false;
+
+	SwordHitBox->BodyInstance.SetCollisionProfileName("OverlapAll");
+	//SwordHitBox->bGenerateOverlapEvents = true;
+	//SetRootComponent(BladeComponent);
+
+	//SwordHitBox->OnComponentBeginOverlap.AddDynamic(this, &ABaseCharacter::OnBeginOverlap);
+
+
 	//Create and poisition a mesh component so we can see where our sphere is
 	SphereVisual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualRepresentation"));
 	SphereVisual->SetupAttachment(RootComponent);
@@ -29,8 +55,8 @@ ABaseCharacter::ABaseCharacter()
 	if (SphereVisualAsset.Succeeded())
 	{
 		SphereVisual->SetStaticMesh(SphereVisualAsset.Object);
-		SphereVisual->SetRelativeLocation(FVector(0.0f, 0.0f, -40.0f));
-		SphereVisual->SetWorldScale3D(FVector(0.25f));
+		SphereVisual->SetRelativeLocation(FVector(0.0f, 0.0f, -35.0f));
+		SphereVisual->SetWorldScale3D(FVector(0.15f));
 	}
 
 	//YogaMaster
@@ -40,9 +66,8 @@ ABaseCharacter::ABaseCharacter()
 	if (SM_YogaMasterAsset.Succeeded())
 	{
 		SM_Yoga->SetStaticMesh(SM_YogaMasterAsset.Object);
-		SM_Yoga->SetRelativeLocation(FVector(0.0f, 0.0f, -40.0f));
-		SM_Yoga->SetWorldScale3D(FVector(0.25f));
-		//SM_Yoga->bVisible = false;
+		SM_Yoga->SetRelativeLocation(FVector(0.0f, 0.0f, -30.0f));
+		SM_Yoga->SetWorldScale3D(FVector(0.15f));
 	}
 
 	//DarthInvader
@@ -53,11 +78,25 @@ ABaseCharacter::ABaseCharacter()
 	{
 		SM_DarthInvader->SetStaticMesh(SM_DarthInvaderAsset.Object);
 		SM_DarthInvader->SetRelativeLocation(FVector(0.0f, 0.0f, -40.0f));
-		SM_DarthInvader->SetWorldScale3D(FVector(0.25f));
+		SM_DarthInvader->SetWorldScale3D(FVector(0.15f));
 		//SM_DarthInvader->bVisible = false;
 	}
 
 	PrimaryActorTick.bCanEverTick = true;
+}
+
+
+void ABaseCharacter::OnSwordBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && (OtherActor != this) && OtherComp)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "ONOVERLAP");
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, OverlappedComponent->GetName());
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, OtherActor->GetName());
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, OtherComp->GetName());
+	}
+
 }
 
 // Called when the game starts or when spawned
@@ -135,6 +174,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 			bMoving = false;
 			bMovementLocked = false;
 			bVerticalLocked = false;
+			vCharacterLocation = this->GetActorLocation();
 
 			FString text = FString::FromInt(this->GetActorLocation().X);
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
@@ -145,10 +185,35 @@ void ABaseCharacter::Tick(float DeltaTime)
 	{
 		if (UGameplayStatics::GetRealTimeSeconds(GetWorld()) > fJumpTimer && bCheckJumpTime)
 		{
-			bVerticalReset = true;
-			bMovementLocked = true;
-			bCheckJumpTime = false;
-			ResetToBottom();
+			if (bJumpingPressed)
+			{
+				bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, bJumpDirection, 2);
+				if (check)
+				{
+					bJumpMoving = true;
+					bMovementLocked = true;
+					bCheckJumpTime = false;
+
+					pPlayerSpace->MovePlayerHorizontal(this, bJumpDirection, 2);
+					vGoingLocation = vCharacterLocation;
+					if (bJumpDirection) { vGoingLocation.X += HorizontalMovement; }
+					else { vGoingLocation.X -= HorizontalMovement; }
+					vGoingLocation.Z += VerticalMovement + (VerticalMovement / 4);
+
+					FLatentActionInfo LatentInfo;
+					LatentInfo.CallbackTarget = this;
+					UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), false, true, 0.11, false, EMoveComponentAction::Type::Move, LatentInfo);
+				}
+				else
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "OCCUPIED!");
+					ResetToBottom();
+				}
+			} 
+			else
+			{
+				ResetToBottom();
+			}
 		}
 
 		if (bVerticalReset)
@@ -161,16 +226,35 @@ void ABaseCharacter::Tick(float DeltaTime)
 				bMovementLocked = false;
 				bVerticalLocked = false;
 				bHorizontalLocked = false;
+				vCharacterLocation = this->GetActorLocation();
+				pPlayerSpace->MovePlayerVertical(this, false);
 
 				FString text = FString::FromInt(this->GetActorLocation().Z);
 				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
 			}
 		}
 
-		if (bJumpMoving)
+		if (bJumpMoving && !bJumpFinishing)
 		{
-			bool bNearby = FMath::IsNearlyEqual(this->GetActorLocation().X, vGoingLocation.X, 0.5f);
-			if (bNearby)
+			bool bNearbyX = FMath::IsNearlyEqual(this->GetActorLocation().X, vGoingLocation.X, 0.5f);
+			bool bNearbyZ = FMath::IsNearlyEqual(this->GetActorLocation().Z, vGoingLocation.Z, 0.5f);
+			if (bNearbyX && bNearbyZ)
+			{
+				bJumpFinishing = true;
+				if (bJumpDirection) { vGoingLocation.X += HorizontalMovement; }
+				else { vGoingLocation.X -= HorizontalMovement; }
+				vGoingLocation.Z -= VerticalMovement + (VerticalMovement / 4);
+
+				FLatentActionInfo LatentInfo;
+				LatentInfo.CallbackTarget = this;
+				UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), true, false, 0.08, false, EMoveComponentAction::Type::Move, LatentInfo);
+			}
+		}
+		if (bJumpMoving && bJumpFinishing)
+		{
+			bool bNearbyX = FMath::IsNearlyEqual(this->GetActorLocation().X, vGoingLocation.X, 0.5f);
+			bool bNearbyZ = FMath::IsNearlyEqual(this->GetActorLocation().Z, vGoingLocation.Z, 0.5f);
+			if (bNearbyX && bNearbyZ)
 			{
 				bJumping = false;
 				bVerticalReset = false;
@@ -178,7 +262,13 @@ void ABaseCharacter::Tick(float DeltaTime)
 				bHorizontalLocked = false;
 
 				bJumpMoving = false;
+				bJumpFinishing = false;
 				bMovementLocked = false;
+
+				bJumpingPressed = false;
+				pPlayerSpace->MovePlayerVertical(this, false);
+
+				vCharacterLocation = this->GetActorLocation();
 
 				FString text = FString::FromInt(this->GetActorLocation().Z);
 				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
@@ -199,17 +289,20 @@ void ABaseCharacter::KeyUp()
 		bHorizontalLocked = true;
 		fJumpTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.20f;
 
-		vGoingLocation = this->GetActorLocation();
+		pPlayerSpace->MovePlayerVertical(this, true);
+
+		vGoingLocation = vCharacterLocation;
 		vGoingLocation.Z += VerticalMovement;
 
 		FLatentActionInfo LatentInfo;
 		LatentInfo.CallbackTarget = this;
-		UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
+		UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), false, true, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
 	}
 }
 
 void ABaseCharacter::KeyDown()
 {
+
 }
 
 void ABaseCharacter::KeyLeft()
@@ -223,13 +316,20 @@ void ABaseCharacter::KeyLeft()
 			bMovementLocked = true;
 			bVerticalLocked = true;
 			pPlayerSpace->MovePlayerHorizontal(this, false, 1);
-			vGoingLocation = this->GetActorLocation();
+
+			vGoingLocation = vCharacterLocation;
 			vGoingLocation.X -= HorizontalMovement;
 
 			FLatentActionInfo LatentInfo;
 			LatentInfo.CallbackTarget = this;
 			UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
 		}
+	}
+
+	if (bHorizontalLocked && !bVerticalReset && !bJumpingPressed)
+	{
+		bJumpDirection = false;
+		bJumpingPressed = true;
 	}
 }
 
@@ -244,7 +344,7 @@ void ABaseCharacter::KeyRight()
 			bMovementLocked = true;
 			bVerticalLocked = true;
 			pPlayerSpace->MovePlayerHorizontal(this, true, 1);
-			vGoingLocation = this->GetActorLocation();
+			vGoingLocation = vCharacterLocation;
 			vGoingLocation.X += HorizontalMovement;
 
 			FLatentActionInfo LatentInfo;
@@ -253,34 +353,20 @@ void ABaseCharacter::KeyRight()
 		}
 	}
 
-	if (bHorizontalLocked && !bVerticalReset)
+	if (bHorizontalLocked && !bVerticalReset && !bJumpingPressed)
 	{
-		bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, true, 2);
-		if (check) 
-		{
-			bJumpMoving = true;
-			bMovementLocked = true;
-
-			pPlayerSpace->MovePlayerHorizontal(this, true, 2);
-			vGoingLocation = this->GetActorLocation();
-			vGoingLocation.X += HorizontalMovement * 2;
-
-			FLatentActionInfo LatentInfo;
-			LatentInfo.CallbackTarget = this;
-			UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "OCCUPIED!");
-		}
+		bJumpDirection = true;
+		bJumpingPressed = true;
 	}
 }
 
 void ABaseCharacter::ResetToBottom()
 {
-	// push down, check for position and then reset movement
-	vGoingLocation = this->GetActorLocation();
-	vGoingLocation.Z -= VerticalMovement;
+	bVerticalReset = true;
+	bMovementLocked = true;
+	bCheckJumpTime = false;
+	vGoingLocation = vCharacterLocation;
+	//vGoingLocation.Z -= VerticalMovement;
 
 	FLatentActionInfo LatentInfo;
 	LatentInfo.CallbackTarget = this;
@@ -289,10 +375,22 @@ void ABaseCharacter::ResetToBottom()
 
 void ABaseCharacter::Attack()
 {
+	if (!bAttacking)
+	{
+		bAttacking = true;
+		SwordHitBox->bGenerateOverlapEvents = true;
+		SwordHitBox->SetBoxExtent(FVector(16.0f, 32.0f, 8.0f));
+	}
 }
 
 void ABaseCharacter::Special()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "SPECIAL BUTTONS!");
+	if (!bAttacking)
+	{
+		bAttacking = true;
+
+	}
 }
 
 void ABaseCharacter::SetModelVisibleYoga()
@@ -301,6 +399,7 @@ void ABaseCharacter::SetModelVisibleYoga()
 	SphereVisual->GetAttachmentRoot()->SetVisibility(false, false);
 	SM_DarthInvader->ToggleVisibility();
 	SM_DarthInvader->GetAttachmentRoot()->SetVisibility(false, false);
+	vCharacterLocation = this->GetActorLocation();
 }
 
 void ABaseCharacter::SetModelVisibleVader()
@@ -309,10 +408,25 @@ void ABaseCharacter::SetModelVisibleVader()
 	SphereVisual->GetAttachmentRoot()->SetVisibility(false, false);
 	SM_Yoga->ToggleVisibility();
 	SM_Yoga->GetAttachmentRoot()->SetVisibility(false, false);
+	vCharacterLocation = this->GetActorLocation();
 }
 
 void ABaseCharacter::SetDirection(bool a_bState)
 {
-	b_MirroredDirection = true;
+	b_MirroredDirection = a_bState;
+
+	if (!b_MirroredDirection)
+		RootComponent->SetWorldRotation(FRotator(0.f, (360.0f - CharacterRotation), 0.0f));
+	else
+		RootComponent->SetWorldRotation(FRotator(0.f, CharacterRotation, 0.0f));
 }
 
+void ABaseCharacter::OverLapFunction()
+{
+
+}
+
+bool ABaseCharacter::GetAttackable()
+{
+	return bAttackable;
+}
