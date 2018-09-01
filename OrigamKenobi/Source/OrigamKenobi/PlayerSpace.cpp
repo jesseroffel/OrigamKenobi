@@ -23,22 +23,27 @@ bool APlayerSpace::CheckMovement(int left, int right, int amount)
 {
 	if (left < right)
 	{
-		if ((left += amount) < right)
-		{
-			return true;
-		}
-		else
+		//if ((left += amount) < right)
+		//{
+		//	return true;
+		//}
+		if ((left += amount) == right)
 		{
 			return false;
 		}
+		return true;
 	}
 	else
 	{
-		if ((left += amount) > right)
+		//if ((left += amount) > right)
+		//{
+		//	return true;
+		//}
+		if ((left += amount) == right)
 		{
-			return true;
+			return false;
 		}
-		return false;
+		return true;
 	}
 }
 
@@ -60,7 +65,7 @@ int APlayerSpace::AddPlayerEntity(ABaseCharacter* a_pBaseCharacter)
 	return 2;
 }
 
-bool APlayerSpace::CheckMovePlayerHorizontal(ABaseCharacter* a_pPlayer, bool a_bMoveRight)
+bool APlayerSpace::CheckMovePlayerHorizontal(ABaseCharacter* a_pPlayer, bool a_bMoveRight, int a_iMovement)
 {
 	if (PlayerOne && PlayerTwo && a_pPlayer != nullptr)
 	{
@@ -69,20 +74,20 @@ bool APlayerSpace::CheckMovePlayerHorizontal(ABaseCharacter* a_pPlayer, bool a_b
 			if (a_bMoveRight)
 			{
 				// Player 1 is on the left and moves right
-				return this->CheckMovement(i_P1_BlockUnit, i_P2_BlockUnit, 1);
+				return this->CheckMovement(i_P1_BlockUnit, i_P2_BlockUnit, a_iMovement);
 			} else
 			{
 				// Player 1 is on the right and moves left
-				return this->CheckMovement(i_P1_BlockUnit, i_P2_BlockUnit, -1);
+				return this->CheckMovement(i_P1_BlockUnit, i_P2_BlockUnit, -a_iMovement);
 			}
 		}
 		if (a_bMoveRight)
 		{
 			// Player 2 is on the left and moves right
-			return CheckMovement(i_P2_BlockUnit, i_P1_BlockUnit, 1);
+			return CheckMovement(i_P2_BlockUnit, i_P1_BlockUnit, a_iMovement);
 		} else
 		{
-			return this->CheckMovement(i_P2_BlockUnit, i_P1_BlockUnit, -1);
+			return this->CheckMovement(i_P2_BlockUnit, i_P1_BlockUnit, -a_iMovement);
 		}
 		// Player 2 is on the right and moves left
 	}

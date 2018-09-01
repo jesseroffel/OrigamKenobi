@@ -17,7 +17,11 @@ public:
 	GENERATED_BODY()
 
 	ACharacterController();
-	
+protected:
+	//
+public:
+	// Called every frame
+	virtual void PlayerTick(float DeltaTime) override;
 	
 	
 };

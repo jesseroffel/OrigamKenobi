@@ -5,4 +5,11 @@
 
 ACharacterController::ACharacterController() : APlayerController()
 {
+
 }
+
+void ACharacterController::PlayerTick(float DeltaTime)
+{
+	Super::PlayerTick(DeltaTime);
+}
+

@@ -21,7 +21,6 @@ void AGameDirector::BeginPlay()
 	Super::BeginPlay();
 	if (aa_pPlayer1Spawn && aa_pPlayer2Spawn)
 	{
-		ACharacterController* PC2 = GetWorld()->SpawnActor<ACharacterController>(ACharacterController::StaticClass());
 		this->CreatePlayers();
 	}
 }
@@ -45,10 +44,13 @@ void AGameDirector::CreatePlayers()
 					P1->SetPlayerMovementController(pPlayerSpace);
 					P1->SignMyselfUpForMovement();
 				}
-
+				P1->SetModelVisibleYoga();
 			}
 			else { UE_LOG(LogTemp, Warning, TEXT("Actor could not be spawned!")); }
 			//Player 2
+
+			
+			UGameplayStatics::CreatePlayer(GetWorld(), 1, true);
 			ABaseCharacter* P2 = GetWorld()->SpawnActor<ABaseCharacter>(ABaseCharacter::StaticClass(), aa_pPlayer2Spawn->GetActorLocation(), FRotator::ZeroRotator);
 			if (P2)
 			{
@@ -59,6 +61,8 @@ void AGameDirector::CreatePlayers()
 					P2->SetPlayerMovementController(pPlayerSpace);
 					P2->SignMyselfUpForMovement();
 				}
+				P2->SetModelVisibleVader();
+				P2->SetDirection(false);
 			}
 			else { UE_LOG(LogTemp, Warning, TEXT("Actor could not be spawned!")); }
 		}

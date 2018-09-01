@@ -21,8 +21,10 @@ protected:
 	virtual void BeginPlay() override;
 
 
-	int i_P1_BlockUnit = 0;
-	int i_P2_BlockUnit = 7;
+	int i_P1_BlockUnit = 0;	// X Axis
+	int i_P1_LevelUnit = 0;	// Y Axis
+	int i_P2_BlockUnit = 7;	// X Axis
+	int i_P2_LevelUnit = 0;	// Y Axis
 
 	ABaseCharacter* PlayerOne = nullptr;
 	ABaseCharacter* PlayerTwo = nullptr;
@@ -35,7 +37,7 @@ public:
 
 	int AddPlayerEntity(ABaseCharacter* a_pBaseCharacter = nullptr);
 
-	bool CheckMovePlayerHorizontal(ABaseCharacter* a_pPlayer = nullptr, bool a_bMoveRight = true);
+	bool CheckMovePlayerHorizontal(ABaseCharacter* a_pPlayer = nullptr, bool a_bMoveRight = true, int a_iMovement = 1);
 
 	void MovePlayerHorizontal(ABaseCharacter* a_pPlayer, bool a_bMoveRight, int a_iAmount);
 

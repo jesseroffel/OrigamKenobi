@@ -29,7 +29,29 @@ protected:
 
 	int iPlayerNumber = 0;
 
-public:	
+	bool bMovementLocked = false;
+	bool bMoving = false;
+
+	bool bHorizontalLocked = false;
+	bool bJumping = false;
+	bool bVerticalLocked = false;
+	bool bVerticalReset = false;
+	bool bCheckJumpTime = true;
+	bool bJumpMoving = false;
+	FVector vGoingLocation;
+
+	float fJumpTimer = 0;
+	void ResetToBottom();
+
+	float HorizontalMovement = 100.0f;
+	float VerticalMovement = 100.0f;
+
+public:
+
+	UStaticMeshComponent* SphereVisual = nullptr;
+	UStaticMeshComponent* SM_Yoga = nullptr;
+	UStaticMeshComponent* SM_DarthInvader = nullptr;
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -53,5 +75,10 @@ public:
 
 	void Attack();
 	void Special();
-	
+
+
+	void SetModelVisibleYoga();
+	void SetModelVisibleVader();
+
+	void SetDirection(bool a_bState);
 };
