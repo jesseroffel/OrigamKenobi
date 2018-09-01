@@ -20,17 +20,20 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	// 0=0 1=50 2=100 3=150 4=200 5=250 6=300 7=350 8=400 9=450 10=500 11=550 12=600 13=650 14=700 15=750
+	// 16 steps on board, -1 && 16 = death	0-15 range
+	int iP1BlockUnit = 5;	// X Axis
+	int iP1LevelUnit = 0;	// Y Axis
+	int iP2BlockUnit = 11;	// X Axis
+	int iP2LevelUnit = 0;	// Y Axis
 
-	int i_P1_BlockUnit = 0;	// X Axis
-	int i_P1_LevelUnit = 0;	// Y Axis
-	int i_P2_BlockUnit = 7;	// X Axis
-	int i_P2_LevelUnit = 0;	// Y Axis
+	bool bPlayerOneLeft = true;
+	bool bSwitched = false;
 
 	ABaseCharacter* PlayerOne = nullptr;
 	ABaseCharacter* PlayerTwo = nullptr;
 
 	bool CheckMovement(int left, int right, int amount);
-
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -40,6 +43,12 @@ public:
 	bool CheckMovePlayerHorizontal(ABaseCharacter* a_pPlayer = nullptr, bool a_bMoveRight = true, int a_iMovement = 1);
 
 	void MovePlayerHorizontal(ABaseCharacter* a_pPlayer, bool a_bMoveRight, int a_iAmount);
+
+	void MovePlayerVertical(ABaseCharacter* a_pPlayer, bool a_bMoveUp);
+
+	bool CheckOtherPlayerSameLayer(ABaseCharacter* a_pPlayer, bool a_bRightDirection, int a_iAmount);
+
+	void CheckWhoIsLeftRight();
 
 	int getP1Block();
 	int getP2Block();

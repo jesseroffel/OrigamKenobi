@@ -39,6 +39,4 @@ public:
 		TArray<ABaseCharacter*> aa_Characters;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameSetup")
 		int i_PlayerCount = 1;
-
-
 };

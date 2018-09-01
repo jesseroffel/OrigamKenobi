@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Components/BoxComponent.h"
 #include "BaseCharacter.generated.h"
 
 class APlayerSpace;
@@ -16,6 +17,9 @@ class ORIGAMKENOBI_API ABaseCharacter : public APawn
 public:
 	// Sets default values for this pawn's properties
 	ABaseCharacter();
+
+	UFUNCTION()
+		void OnSwordBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 
 protected:
 	// Called when the game starts or when spawned
@@ -38,19 +42,31 @@ protected:
 	bool bVerticalReset = false;
 	bool bCheckJumpTime = true;
 	bool bJumpMoving = false;
+	bool bJumpFinishing = false;
+	bool bJumpingPressed = false;
+	bool bJumpDirection = false;
+	bool bAttackable = true;
 	FVector vGoingLocation;
+	FVector vCharacterLocation;
+
+	//ATTACKING
+	bool bAttacking = false;
 
 	float fJumpTimer = 0;
 	void ResetToBottom();
 
-	float HorizontalMovement = 100.0f;
-	float VerticalMovement = 100.0f;
+	float HorizontalMovement = 50.0f;
+	float VerticalMovement = 62.5f;
+	float CharacterRotation = 45.0f;
 
 public:
 
 	UStaticMeshComponent* SphereVisual = nullptr;
 	UStaticMeshComponent* SM_Yoga = nullptr;
 	UStaticMeshComponent* SM_DarthInvader = nullptr;
+
+	UBoxComponent* CharacterHitBox = nullptr;
+	UBoxComponent* SwordHitBox = nullptr;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -67,9 +83,7 @@ public:
 	void SignMyselfUpForMovement();
 
 	void KeyUp();
-
 	void KeyDown();
-
 	void KeyLeft();
 	void KeyRight();
 
@@ -81,4 +95,8 @@ public:
 	void SetModelVisibleVader();
 
 	void SetDirection(bool a_bState);
+
+	void OverLapFunction();
+
+	bool GetAttackable();
 };

@@ -16,17 +16,23 @@ APlayerSpace::APlayerSpace()
 void APlayerSpace::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	bPlayerOneLeft = iP1BlockUnit < iP2BlockUnit ? true : false;
+	if (bPlayerOneLeft)
+	{
+		if (PlayerOne) { PlayerOne->SetDirection(false); }
+		if (PlayerTwo) { PlayerTwo->SetDirection(true); }
+	}
+	else
+	{
+		if (PlayerOne) { PlayerOne->SetDirection(true); }
+		if (PlayerTwo) { PlayerTwo->SetDirection(false); }
+	}
 }
 
 bool APlayerSpace::CheckMovement(int left, int right, int amount)
 {
 	if (left < right)
 	{
-		//if ((left += amount) < right)
-		//{
-		//	return true;
-		//}
 		if ((left += amount) == right)
 		{
 			return false;
@@ -35,10 +41,6 @@ bool APlayerSpace::CheckMovement(int left, int right, int amount)
 	}
 	else
 	{
-		//if ((left += amount) > right)
-		//{
-		//	return true;
-		//}
 		if ((left += amount) == right)
 		{
 			return false;
@@ -74,20 +76,20 @@ bool APlayerSpace::CheckMovePlayerHorizontal(ABaseCharacter* a_pPlayer, bool a_b
 			if (a_bMoveRight)
 			{
 				// Player 1 is on the left and moves right
-				return this->CheckMovement(i_P1_BlockUnit, i_P2_BlockUnit, a_iMovement);
+				return this->CheckMovement(iP1BlockUnit, iP2BlockUnit, a_iMovement);
 			} else
 			{
 				// Player 1 is on the right and moves left
-				return this->CheckMovement(i_P1_BlockUnit, i_P2_BlockUnit, -a_iMovement);
+				return this->CheckMovement(iP1BlockUnit, iP2BlockUnit, -a_iMovement);
 			}
 		}
 		if (a_bMoveRight)
 		{
 			// Player 2 is on the left and moves right
-			return CheckMovement(i_P2_BlockUnit, i_P1_BlockUnit, a_iMovement);
+			return CheckMovement(iP2BlockUnit, iP1BlockUnit, a_iMovement);
 		} else
 		{
-			return this->CheckMovement(i_P2_BlockUnit, i_P1_BlockUnit, -a_iMovement);
+			return this->CheckMovement(iP2BlockUnit, iP1BlockUnit, -a_iMovement);
 		}
 		// Player 2 is on the right and moves left
 	}
@@ -101,22 +103,75 @@ void APlayerSpace::MovePlayerHorizontal(ABaseCharacter* a_pPlayer, bool a_bMoveR
 	{
 		if (PlayerOne == a_pPlayer)
 		{
-			if (a_bMoveRight) { i_P1_BlockUnit += a_iAmount; } else { i_P1_BlockUnit -= a_iAmount; }
+			if (a_bMoveRight) { iP1BlockUnit += a_iAmount; } else { iP1BlockUnit -= a_iAmount; }
 		}
 		else
 		{
-			if (a_bMoveRight) { i_P2_BlockUnit += a_iAmount; } else { i_P2_BlockUnit -= a_iAmount; }
+			if (a_bMoveRight) { iP2BlockUnit += a_iAmount; } else { iP2BlockUnit -= a_iAmount; }
+		}
+	}
+	CheckWhoIsLeftRight();
+}
+
+void APlayerSpace::MovePlayerVertical(ABaseCharacter* a_pPlayer, bool a_bMoveUp)
+{
+	if (PlayerOne && PlayerTwo && a_pPlayer != nullptr)
+	{
+		if (PlayerOne == a_pPlayer)
+		{
+			iP1LevelUnit = a_bMoveUp ? iP1LevelUnit + 1 : iP1LevelUnit - 1;
+		} else
+		{
+			iP2LevelUnit = a_bMoveUp ? iP2LevelUnit + 1 : iP2LevelUnit - 1;
+		}
+	}
+}
+
+bool APlayerSpace::CheckOtherPlayerSameLayer(ABaseCharacter* a_pPlayer, bool a_bRightDirection, int a_iAmount)
+{
+	return true;
+}
+
+void APlayerSpace::CheckWhoIsLeftRight()
+{
+	if (bPlayerOneLeft)
+	{
+		if (iP1BlockUnit > iP2BlockUnit) {
+			bPlayerOneLeft = false;
+			bSwitched = true;
+		}
+	} else
+	{
+		if (iP2BlockUnit > iP1BlockUnit) {
+			bPlayerOneLeft = true;
+			bSwitched = true;
+		}
+	}
+
+	//Set Player values
+
+	if (bSwitched)
+	{
+		bSwitched = false;
+		if (bPlayerOneLeft)
+		{
+			if (PlayerOne) { PlayerOne->SetDirection(false); }
+			if (PlayerTwo) { PlayerTwo->SetDirection(true); }
+		} else
+		{
+			if (PlayerOne) { PlayerOne->SetDirection(true); }
+			if (PlayerTwo) { PlayerTwo->SetDirection(false); }
 		}
 	}
 }
 
 int APlayerSpace::getP1Block()
 {
-	return i_P1_BlockUnit;
+	return iP1BlockUnit;
 }
 
 int APlayerSpace::getP2Block()
 {
-	return i_P2_BlockUnit;
+	return iP2BlockUnit;
 }
 
