@@ -27,7 +27,6 @@ ABaseCharacter::ABaseCharacter()
 	CharacterHitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CharacterHitbox"));
 	CharacterHitBox->SetupAttachment(RootComponent);
 	CharacterHitBox->SetBoxExtent(FVector(16.0f, 32.0f, 32.0f));
-	CharacterHitBox->SetHiddenInGame(false);
 	CharacterHitBox->BodyInstance.SetCollisionProfileName("OverlapAll");
 	CharacterHitBox->bGenerateOverlapEvents = true;
 	//CharacterHitBox->OnComponentBeginOverlap.AddDynamic(this, &ABaseCharacter::OnCharacterOverlap);
@@ -167,7 +166,274 @@ void ABaseCharacter::SignMyselfUpForMovement()
 void ABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	const float fWorldTime = UGameplayStatics::GetRealTimeSeconds(GetWorld());
 
+	//Check key combinations
+
+	if (bCheckMoveTimer)
+	{
+		if (fWorldTime > fBeforeMovingTimer)
+		{
+			if (bRightDirectionPressed) { MoveRight(); }
+			else { MoveLeft(); }
+		}
+		if (fWorldTime < fBeforeMovingTimer && bActionButtonPressed)
+		{
+			bCombinationTriggered = true;
+			bMoving = false;
+			bCheckMoveTimer = false;
+			SideAttack();
+		}
+	}
+
+	if (bActionButtonPressed && !bDirectionPressed) { BlockAttack(); }
+
+	CheckPlayerMove();
+	CheckPlayerJump();
+
+	if (bAttacking)
+	{
+		if (bCheckAttackTimer && fWorldTime > fAttackingTimer)
+		{
+			bAttacking = false;
+			bMovementLocked = false;
+			bVerticalLocked = false;
+			bCheckAttackTimer = false;
+
+			SwordHitBox->bGenerateOverlapEvents = false;
+			SwordHitBox->SetHiddenInGame(true);
+		}
+	}
+
+	if (bBlocking)
+	{
+		if (bCheckBlockTimer && fWorldTime > fBlockTimer)
+		{
+			bBlocking = false;
+			bMovementLocked = false;
+			bHorizontalLocked = false;
+			bVerticalLocked = false;
+			bCheckBlockTimer = false;
+			bCheckMoveTimer = false;
+			CharacterHitBox->SetHiddenInGame(true);
+		}
+	}
+
+	//Reset buttons
+	bActionButtonPressed = false;
+	bDirectionPressed = false;
+	bCombinationTriggered = false;
+}
+
+
+
+void ABaseCharacter::KeyUp()
+{
+	if (!bJumping && !bVerticalLocked)
+	{
+		bJumping = true;
+		bVerticalLocked = true;
+		bCheckJumpTimer = true;
+		bHorizontalLocked = true;
+		fJumpTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.20f;
+
+		pPlayerSpace->MovePlayerVertical(this, true);
+
+		vGoingLocation = vCharacterLocation;
+		vGoingLocation.Z += VerticalMovement;
+
+		FLatentActionInfo LatentInfo;
+		LatentInfo.CallbackTarget = this;
+		UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), false, true, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
+	}
+}
+
+void ABaseCharacter::KeyDown()
+{
+
+}
+
+void ABaseCharacter::KeyLeft()
+{
+	bDirectionPressed = true;
+	bRightDirectionPressed = false;
+	if (!bMovementLocked)
+	{
+		bCheckMoveTimer = true;
+		fBeforeMovingTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.045f;
+	}
+}
+
+void ABaseCharacter::KeyRight()
+{
+	bDirectionPressed = true;
+	bRightDirectionPressed = true;
+	if (!bMovementLocked)
+	{
+		bCheckMoveTimer = true;
+		fBeforeMovingTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.045f;
+	}
+}
+
+void ABaseCharacter::ResetToBottom()
+{
+	bVerticalReset = true;
+	bMovementLocked = true;
+	bCheckJumpTimer = false;
+	vGoingLocation = vCharacterLocation;
+	//vGoingLocation.Z -= VerticalMovement;
+
+	FLatentActionInfo LatentInfo;
+	LatentInfo.CallbackTarget = this;
+	UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
+}
+
+void ABaseCharacter::Attack()
+{
+	bActionButtonPressed = true;
+	
+}
+
+void ABaseCharacter::Special()
+{
+
+}
+
+void ABaseCharacter::SetModelVisibleYoga()
+{
+	SphereVisual->ToggleVisibility();
+	SphereVisual->GetAttachmentRoot()->SetVisibility(false, false);
+	SM_DarkInvader->ToggleVisibility();
+	SM_DarkInvader->GetAttachmentRoot()->SetVisibility(false, false);
+	vCharacterLocation = this->GetActorLocation();
+}
+
+void ABaseCharacter::SetModelVisibleVader()
+{
+	SphereVisual->ToggleVisibility();
+	SphereVisual->GetAttachmentRoot()->SetVisibility(false, false);
+	SM_Yoga->ToggleVisibility();
+	SM_Yoga->GetAttachmentRoot()->SetVisibility(false, false);
+	vCharacterLocation = this->GetActorLocation();
+}
+
+void ABaseCharacter::SetDirection(bool a_bState)
+{
+	b_MirroredDirection = a_bState;
+
+	if (!b_MirroredDirection)
+		RootComponent->SetWorldRotation(FRotator(0.f, (360.0f - CharacterRotation), 0.0f));
+	else
+		RootComponent->SetWorldRotation(FRotator(0.f, CharacterRotation, 0.0f));
+}
+
+void ABaseCharacter::OverLapFunction()
+{
+
+}
+
+bool ABaseCharacter::GetAttackable()
+{
+	return bAttackable;
+}
+
+void ABaseCharacter::MoveLeft()
+{
+	if (!bMovementLocked && !bHorizontalLocked)
+	{
+		bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, false, 1);
+		if (check)
+		{
+			bMoving = true;
+			bMovementLocked = true;
+			bVerticalLocked = true;
+			pPlayerSpace->MovePlayerHorizontal(this, false, 1);
+
+			vGoingLocation = vCharacterLocation;
+			vGoingLocation.X -= HorizontalMovement;
+
+			bCheckMoveTimer = false;
+
+			FLatentActionInfo LatentInfo;
+			LatentInfo.CallbackTarget = this;
+			UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
+		}
+	}
+
+	if (!bMovementLocked && bHorizontalLocked && !bVerticalReset && !bJumpingPressed)
+	{
+		bJumpDirection = false;
+		bJumpingPressed = true;
+	}
+}
+
+void ABaseCharacter::MoveRight()
+{
+	if (!bMovementLocked && !bHorizontalLocked)
+	{
+		bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, true);
+		if (check)
+		{
+			bMoving = true;
+			bMovementLocked = true;
+			bVerticalLocked = true;
+			pPlayerSpace->MovePlayerHorizontal(this, true, 1);
+			vGoingLocation = vCharacterLocation;
+			vGoingLocation.X += HorizontalMovement;
+
+			bCheckMoveTimer = false;
+
+			FLatentActionInfo LatentInfo;
+			LatentInfo.CallbackTarget = this;
+			UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
+		}
+	}
+
+	if (!bMovementLocked && bHorizontalLocked && !bVerticalReset && !bJumpingPressed)
+	{
+		bJumpDirection = true;
+		bJumpingPressed = true;
+	}
+}
+
+
+void ABaseCharacter::SideAttack()
+{
+	if (!bAttacking && !bHorizontalLocked && !bVerticalLocked)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "Side attack!");
+		bAttacking = true;
+		bMovementLocked = true;
+		bVerticalLocked = true;
+
+		bCheckAttackTimer = true;
+		fAttackingTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.25f;
+
+		SwordHitBox->bGenerateOverlapEvents = true;
+		SwordHitBox->SetBoxExtent(FVector(16.0f, 32.0f, 8.0f));
+		SwordHitBox->SetHiddenInGame(false);
+	}
+}
+
+void ABaseCharacter::BlockAttack()
+{
+	if (!bBlocking && !bHorizontalLocked && !bVerticalLocked)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "BLOCK attack!");
+		bBlocking = true;
+		bHorizontalLocked = true;
+		bMovementLocked = true;
+		bVerticalLocked = true;
+
+		bCheckBlockTimer = true;
+		fBlockTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.25f;
+
+		CharacterHitBox->SetHiddenInGame(false);
+	}
+}
+
+void ABaseCharacter::CheckPlayerMove()
+{
 	if (bMoving)
 	{
 		bool bNearby = FMath::IsNearlyEqual(this->GetActorLocation().X, vGoingLocation.X, 0.5f);
@@ -182,10 +448,13 @@ void ABaseCharacter::Tick(float DeltaTime)
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
 		}
 	}
+}
 
+void ABaseCharacter::CheckPlayerJump()
+{
 	if (bJumping)
 	{
-		if (UGameplayStatics::GetRealTimeSeconds(GetWorld()) > fJumpTimer && bCheckJumpTime)
+		if (UGameplayStatics::GetRealTimeSeconds(GetWorld()) > fJumpTimer && bCheckJumpTimer)
 		{
 			if (bJumpingPressed)
 			{
@@ -194,7 +463,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 				{
 					bJumpMoving = true;
 					bMovementLocked = true;
-					bCheckJumpTime = false;
+					bCheckJumpTimer = false;
 
 					pPlayerSpace->MovePlayerHorizontal(this, bJumpDirection, 2);
 					vGoingLocation = vCharacterLocation;
@@ -211,7 +480,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "OCCUPIED!");
 					ResetToBottom();
 				}
-			} 
+			}
 			else
 			{
 				ResetToBottom();
@@ -228,6 +497,9 @@ void ABaseCharacter::Tick(float DeltaTime)
 				bMovementLocked = false;
 				bVerticalLocked = false;
 				bHorizontalLocked = false;
+
+				bCheckMoveTimer = false;
+
 				vCharacterLocation = this->GetActorLocation();
 				pPlayerSpace->MovePlayerVertical(this, false);
 
@@ -268,6 +540,9 @@ void ABaseCharacter::Tick(float DeltaTime)
 				bMovementLocked = false;
 
 				bJumpingPressed = false;
+				bCheckMoveTimer = false;
+				bCheckJumpTimer = false;
+
 				pPlayerSpace->MovePlayerVertical(this, false);
 
 				vCharacterLocation = this->GetActorLocation();
@@ -277,158 +552,4 @@ void ABaseCharacter::Tick(float DeltaTime)
 			}
 		}
 	}
-}
-
-
-
-void ABaseCharacter::KeyUp()
-{
-	if (!bJumping && !bVerticalLocked)
-	{
-		bJumping = true;
-		bVerticalLocked = true;
-		bCheckJumpTime = true;
-		bHorizontalLocked = true;
-		fJumpTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.20f;
-
-		pPlayerSpace->MovePlayerVertical(this, true);
-
-		vGoingLocation = vCharacterLocation;
-		vGoingLocation.Z += VerticalMovement;
-
-		FLatentActionInfo LatentInfo;
-		LatentInfo.CallbackTarget = this;
-		UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), false, true, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
-	}
-}
-
-void ABaseCharacter::KeyDown()
-{
-
-}
-
-void ABaseCharacter::KeyLeft()
-{
-	if (!bMovementLocked && !bHorizontalLocked)
-	{
-		bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, false, 1);
-		if (check)
-		{
-			bMoving = true;
-			bMovementLocked = true;
-			bVerticalLocked = true;
-			pPlayerSpace->MovePlayerHorizontal(this, false, 1);
-
-			vGoingLocation = vCharacterLocation;
-			vGoingLocation.X -= HorizontalMovement;
-
-			FLatentActionInfo LatentInfo;
-			LatentInfo.CallbackTarget = this;
-			UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
-		}
-	}
-
-	if (bHorizontalLocked && !bVerticalReset && !bJumpingPressed)
-	{
-		bJumpDirection = false;
-		bJumpingPressed = true;
-	}
-}
-
-void ABaseCharacter::KeyRight()
-{
-	if (!bMovementLocked && !bHorizontalLocked)
-	{
-		bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, true);
-		if (check)
-		{
-			bMoving = true;
-			bMovementLocked = true;
-			bVerticalLocked = true;
-			pPlayerSpace->MovePlayerHorizontal(this, true, 1);
-			vGoingLocation = vCharacterLocation;
-			vGoingLocation.X += HorizontalMovement;
-
-			FLatentActionInfo LatentInfo;
-			LatentInfo.CallbackTarget = this;
-			UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
-		}
-	}
-
-	if (bHorizontalLocked && !bVerticalReset && !bJumpingPressed)
-	{
-		bJumpDirection = true;
-		bJumpingPressed = true;
-	}
-}
-
-void ABaseCharacter::ResetToBottom()
-{
-	bVerticalReset = true;
-	bMovementLocked = true;
-	bCheckJumpTime = false;
-	vGoingLocation = vCharacterLocation;
-	//vGoingLocation.Z -= VerticalMovement;
-
-	FLatentActionInfo LatentInfo;
-	LatentInfo.CallbackTarget = this;
-	UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
-}
-
-void ABaseCharacter::Attack()
-{
-	if (!bAttacking)
-	{
-		bAttacking = true;
-		SwordHitBox->bGenerateOverlapEvents = true;
-		SwordHitBox->SetBoxExtent(FVector(16.0f, 32.0f, 8.0f));
-	}
-}
-
-void ABaseCharacter::Special()
-{
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "SPECIAL BUTTONS!");
-	if (!bAttacking)
-	{
-		bAttacking = true;
-
-	}
-}
-
-void ABaseCharacter::SetModelVisibleYoga()
-{
-	SphereVisual->ToggleVisibility();
-	SphereVisual->GetAttachmentRoot()->SetVisibility(false, false);
-	SM_DarkInvader->ToggleVisibility();
-	SM_DarkInvader->GetAttachmentRoot()->SetVisibility(false, false);
-	vCharacterLocation = this->GetActorLocation();
-}
-
-void ABaseCharacter::SetModelVisibleVader()
-{
-	SphereVisual->ToggleVisibility();
-	SphereVisual->GetAttachmentRoot()->SetVisibility(false, false);
-	SM_Yoga->ToggleVisibility();
-	SM_Yoga->GetAttachmentRoot()->SetVisibility(false, false);
-	vCharacterLocation = this->GetActorLocation();
-}
-
-void ABaseCharacter::SetDirection(bool a_bState)
-{
-	b_MirroredDirection = a_bState;
-
-	if (!b_MirroredDirection)
-		RootComponent->SetWorldRotation(FRotator(0.f, (360.0f - CharacterRotation), 0.0f));
-	else
-		RootComponent->SetWorldRotation(FRotator(0.f, CharacterRotation, 0.0f));
-}
-
-void ABaseCharacter::OverLapFunction()
-{
-
-}
-
-bool ABaseCharacter::GetAttackable()
-{
-	return bAttackable;
 }

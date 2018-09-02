@@ -35,24 +35,37 @@ protected:
 
 	bool bMovementLocked = false;
 	bool bMoving = false;
+	bool bCheckMoveTimer = false;
+	float fBeforeMovingTimer = 0.0f;
 
 	bool bHorizontalLocked = false;
 	bool bJumping = false;
 	bool bVerticalLocked = false;
 	bool bVerticalReset = false;
-	bool bCheckJumpTime = true;
+	bool bCheckJumpTimer = false;
 	bool bJumpMoving = false;
 	bool bJumpFinishing = false;
 	bool bJumpingPressed = false;
 	bool bJumpDirection = false;
-	bool bAttackable = true;
 	FVector vGoingLocation;
 	FVector vCharacterLocation;
 
-	//ATTACKING
+	//ATTACKING 
+	bool bAttackable = true;
 	bool bAttacking = false;
+	bool bCheckAttackTimer = false;
+	float fAttackingTimer = 0.0f;
 
-	float fJumpTimer = 0;
+	bool bBlocking = false;
+	float fBlockTimer = 0.0f;
+	bool bCheckBlockTimer = 0.0f;
+
+	bool bActionButtonPressed = false;
+	bool bDirectionPressed = false;
+	bool bRightDirectionPressed = false;
+	bool bCombinationTriggered = false;
+
+	float fJumpTimer = 0.0f;
 	void ResetToBottom();
 
 	float HorizontalMovement = 50.0f;
@@ -99,4 +112,14 @@ public:
 	void OverLapFunction();
 
 	bool GetAttackable();
+
+	void MoveLeft();
+	void MoveRight();
+
+	void CheckPlayerMove();
+	void CheckPlayerJump();
+
+	void SideAttack();
+	void BlockAttack();
+
 };
