@@ -72,6 +72,10 @@ protected:
 	float VerticalMovement = 62.5f;
 	float CharacterRotation = 45.0f;
 
+	bool bCheckOverlapAttack = false;
+	bool bSuccessfulHit = false;
+	float fCheckOverlapAttackTimer = 0.0f;
+
 public:
 
 	UStaticMeshComponent* SphereVisual = nullptr;
@@ -121,5 +125,5 @@ public:
 
 	void SideAttack();
 	void BlockAttack();
-
+	void AttackHitMe();
 };

@@ -93,9 +93,9 @@ void ABaseCharacter::OnSwordBeginOverlap(UPrimitiveComponent* OverlappedComponen
 		ABaseCharacter* OtherCharacter = Cast<ABaseCharacter>(OtherActor);
 		if (OtherComp->GetName() == "CharacterHitbox" && OtherCharacter->GetAttackable())
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, OverlappedComponent->GetName());
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, OtherActor->GetName());
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, OtherComp->GetName());
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "Player Hit!");
+			bSuccessfulHit = true;
+			OtherCharacter->AttackHitMe();
 		}
 	}
 }
@@ -193,15 +193,34 @@ void ABaseCharacter::Tick(float DeltaTime)
 
 	if (bAttacking)
 	{
-		if (bCheckAttackTimer && fWorldTime > fAttackingTimer)
+		if (bCheckOverlapAttack)
 		{
-			bAttacking = false;
-			bMovementLocked = false;
-			bVerticalLocked = false;
-			bCheckAttackTimer = false;
+			if (fWorldTime <= fCheckOverlapAttackTimer)
+			{
+				if (bSuccessfulHit)
+				{
+					bSuccessfulHit = false;
+					bCheckOverlapAttack = false;
 
-			SwordHitBox->bGenerateOverlapEvents = false;
-			SwordHitBox->SetHiddenInGame(true);
+					SwordHitBox->bGenerateOverlapEvents = false;
+					SwordHitBox->SetBoxExtent(FVector(16.0f, 32.0f, 8.0f));
+				}
+			} else
+			{
+				bCheckOverlapAttack = false;
+				SwordHitBox->bGenerateOverlapEvents = false;
+			}
+		} else
+		{
+			if (bCheckAttackTimer && fWorldTime > fAttackingTimer)
+			{
+				bAttacking = false;
+				bMovementLocked = false;
+				bVerticalLocked = false;
+				bCheckAttackTimer = false;
+				SwordHitBox->SetBoxExtent(FVector(16.0f, 32.0f, 8.0f));
+				SwordHitBox->SetHiddenInGame(true);
+			}
 		}
 	}
 
@@ -210,6 +229,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 		if (bCheckBlockTimer && fWorldTime > fBlockTimer)
 		{
 			bBlocking = false;
+			bAttackable = true;
 			bMovementLocked = false;
 			bHorizontalLocked = false;
 			bVerticalLocked = false;
@@ -241,6 +261,8 @@ void ABaseCharacter::KeyUp()
 
 		vGoingLocation = vCharacterLocation;
 		vGoingLocation.Z += VerticalMovement;
+
+		bAttackable = false;
 
 		FLatentActionInfo LatentInfo;
 		LatentInfo.CallbackTarget = this;
@@ -407,10 +429,12 @@ void ABaseCharacter::SideAttack()
 		bVerticalLocked = true;
 
 		bCheckAttackTimer = true;
-		fAttackingTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.25f;
+		bCheckOverlapAttack = true;
+		fCheckOverlapAttackTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.15f;
+		fAttackingTimer = fCheckOverlapAttackTimer + 0.60f;
 
 		SwordHitBox->bGenerateOverlapEvents = true;
-		SwordHitBox->SetBoxExtent(FVector(16.0f, 32.0f, 8.0f));
+		SwordHitBox->SetBoxExtent(FVector(16.0f, 32.15f, 8.0f));
 		SwordHitBox->SetHiddenInGame(false);
 	}
 }
@@ -421,6 +445,7 @@ void ABaseCharacter::BlockAttack()
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "BLOCK attack!");
 		bBlocking = true;
+		bAttackable = false;
 		bHorizontalLocked = true;
 		bMovementLocked = true;
 		bVerticalLocked = true;
@@ -430,6 +455,10 @@ void ABaseCharacter::BlockAttack()
 
 		CharacterHitBox->SetHiddenInGame(false);
 	}
+}
+
+void ABaseCharacter::AttackHitMe()
+{
 }
 
 void ABaseCharacter::CheckPlayerMove()
@@ -500,6 +529,8 @@ void ABaseCharacter::CheckPlayerJump()
 
 				bCheckMoveTimer = false;
 
+				bAttackable = true;
+
 				vCharacterLocation = this->GetActorLocation();
 				pPlayerSpace->MovePlayerVertical(this, false);
 
@@ -531,6 +562,7 @@ void ABaseCharacter::CheckPlayerJump()
 			if (bNearbyX && bNearbyZ)
 			{
 				bJumping = false;
+				bAttackable = true;
 				bVerticalReset = false;
 				bVerticalLocked = false;
 				bHorizontalLocked = false;

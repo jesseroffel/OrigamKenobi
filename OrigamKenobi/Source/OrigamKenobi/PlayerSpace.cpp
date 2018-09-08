@@ -49,6 +49,12 @@ bool APlayerSpace::CheckMovement(int left, int right, int amount)
 	}
 }
 
+bool APlayerSpace::CheckPlayerVerticalLayer()
+{
+	if (iP1LevelUnit == iP2LevelUnit) { return true; }
+	return false;
+}
+
 // Called every frame
 void APlayerSpace::Tick(float DeltaTime)
 {

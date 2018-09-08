@@ -44,6 +44,8 @@ public:
 
 	void MovePlayerHorizontal(ABaseCharacter* a_pPlayer, bool a_bMoveRight, int a_iAmount);
 
+	bool CheckPlayerVerticalLayer();
+
 	void MovePlayerVertical(ABaseCharacter* a_pPlayer, bool a_bMoveUp);
 
 	bool CheckOtherPlayerSameLayer(ABaseCharacter* a_pPlayer, bool a_bRightDirection, int a_iAmount);
