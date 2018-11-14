@@ -12,11 +12,16 @@
 UENUM()
 enum EAnimationType
 {
-	NoAnim			UMETA(DisplayName = "NoAnim"),
 	Attack			UMETA(DisplayName = "Attack"),
 	Block			UMETA(DisplayName = "Block"),
 	Jump			UMETA(DisplayName = "Jump"),
-	MoveForward     UMETA(DisplayName = "MoveForward")
+	MoveForward     UMETA(DisplayName = "MoveForward"),
+	MoveBackward     UMETA(DisplayName = "MoveBackward"),
+	JumpForward     UMETA(DisplayName = "JumpForward"),
+	JumpBackWard	UMETA(DisplayName = "JumpBackward"),
+	SelfStab		UMETA(DisplayName = "SelfStab"),
+	TakeDamage		UMETA(DisplayName = "TakeDamage"),
+	Idle			UMETA(DisplayName = "Idle"),
 };
 
 
@@ -30,7 +35,7 @@ public:
 	APlayerSpace();
 
 	bool IsHitDirectionLeft(ABaseCharacter* a_CharacterWhoCalled = nullptr) const;
-	void PlayCharacterAnimation(ABaseCharacter* a_character = nullptr, EAnimationType animType = NoAnim) const;
+	void PlayCharacterAnimation(ABaseCharacter* a_character = nullptr, EAnimationType animType = Idle) const;
 	bool HitMySelf(ABaseCharacter* a_Player = nullptr, bool a_RightDirectionPressed = false);
 protected:
 	// Called when the game starts or when spawned
@@ -52,10 +57,16 @@ protected:
 	bool CheckMovement(int left, int right, int amount);
 
 	//Dark Invader animations
+	UAnimationAsset* a_IdleDark = nullptr;
 	UAnimationAsset* a_AttackDark = nullptr;
 	UAnimationAsset* a_BlockDark = nullptr;
 	UAnimationAsset* a_JumpDark = nullptr;
-	UAnimationAsset* a_MoveForwardDark = nullptr; 
+	UAnimationAsset* a_MoveForwardDark = nullptr;
+	UAnimationAsset* a_MoveBackwardDark = nullptr;
+	UAnimationAsset* a_JumpForwardDark = nullptr;
+	UAnimationAsset* a_JumpBackwardDark = nullptr;
+	UAnimationAsset* a_SelfStabDark = nullptr;
+	UAnimationAsset* a_TakeDamageDark = nullptr;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

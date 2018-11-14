@@ -267,7 +267,7 @@ void ABaseCharacter::KeyRight()
 
 void ABaseCharacter::ResetToBottom()
 {
-	pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::NoAnim);
+	pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::Idle);
 	bVerticalReset = true;
 	bMovementLocked = true;
 	bCheckJumpTimer = false;
@@ -335,7 +335,10 @@ void ABaseCharacter::MoveLeft()
 		bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, false, 1);
 		if (check)
 		{
-			pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::MoveForward);
+			//use HitMyself function to check direction... lazy...
+			const bool bBackWards = pPlayerSpace->HitMySelf(this, false);
+			if (bBackWards) { pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::MoveBackward); }
+			else { pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::MoveForward);}
 			bMoving = true;
 			bMovementLocked = true;
 			bVerticalLocked = true;
@@ -367,7 +370,10 @@ void ABaseCharacter::MoveRight()
 		bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, true);
 		if (check)
 		{
-			pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::MoveForward);
+			//use HitMyself function to check direction... lazy...
+			const bool bBackWards = pPlayerSpace->HitMySelf(this, bRightDirectionPressed);
+			if (bBackWards) { pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::MoveBackward); }
+			else { pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::MoveForward);}
 			bMoving = true;
 			bMovementLocked = true;
 			bVerticalLocked = true;
@@ -395,8 +401,7 @@ void ABaseCharacter::MoveRight()
 void ABaseCharacter::SideAttack()
 {
 	bSelfHit = pPlayerSpace->HitMySelf(this, bRightDirectionPressed);
-	//if (bSelfHit) { GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "SelfHit!");}
-	if (!bAttacking && !bHorizontalLocked && !bVerticalLocked)
+	if (!bAttacking && !bHorizontalLocked && !bVerticalLocked && !bSelfHit)
 	{
 		pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::Attack);
 		bAttacking = true;
@@ -411,6 +416,14 @@ void ABaseCharacter::SideAttack()
 		SwordHitBox->bGenerateOverlapEvents = true;
 		SwordHitBox->SetBoxExtent(FVector(16.0f, 32.15f, 8.0f));
 		SwordHitBox->SetHiddenInGame(false);
+	}
+	if (bSelfHit)
+	{
+		pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::SelfStab);
+		bStunned = true;
+		fStunTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.60f;
+		bMovementLocked = true;
+		bVerticalLocked = true;
 	}
 }
 
@@ -436,6 +449,7 @@ void ABaseCharacter::BlockAttack()
 void ABaseCharacter::AttackHitMe(bool a_bLeftDirection)
 {
 	// Direction = where hit character should go
+	pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::TakeDamage);
 	bStunned = true;
 	fStunTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.60f;
 	bMovementLocked = true;
@@ -502,6 +516,10 @@ void ABaseCharacter::CheckPlayerJump()
 				bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, bJumpDirection, 2);
 				if (check)
 				{
+					//use HitMyself function to check direction... lazy...
+					const bool bBackWards = pPlayerSpace->HitMySelf(this, bRightDirectionPressed);
+					if (bBackWards) { pPlayerSpace->PlayCharacterAnimation(this, JumpBackWard); }
+					else { pPlayerSpace->PlayCharacterAnimation(this, JumpForward); }
 					bJumpMoving = true;
 					bMovementLocked = true;
 					bCheckJumpTimer = false;
@@ -640,7 +658,7 @@ void ABaseCharacter::CheckPlayerBlocking(float const fWorldTime)
 	{
 		if (bCheckBlockTimer && fWorldTime > fBlockTimer)
 		{
-			pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::NoAnim);
+			pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::Idle);
 			bBlocking = false;
 			bAttackable = true;
 			bMovementLocked = false;

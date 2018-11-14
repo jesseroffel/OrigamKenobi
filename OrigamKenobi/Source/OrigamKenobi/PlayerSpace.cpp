@@ -13,15 +13,31 @@ APlayerSpace::APlayerSpace()
 	PrimaryActorTick.bCanEverTick = true;
 
 	//Dark invader animations
+	
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimIdleDark(TEXT("/Game/Animations/Anim_DarkInvader_Idle"));
+	if (AU_AnimIdleDark.Succeeded()) { a_IdleDark = AU_AnimIdleDark.Object; }
 	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimAttackDark(TEXT("/Game/Animations/Anim_DarkInvader_Attack"));
 	if (AU_AnimAttackDark.Succeeded()) { a_AttackDark = AU_AnimAttackDark.Object; }
 	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimBlockDark(TEXT("/Game/Animations/Anim_DarkInvader_Block"));
 	if (AU_AnimBlockDark.Succeeded()) { a_BlockDark = AU_AnimBlockDark.Object; }
-	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimJumpDark(TEXT("/Game/Animations/Anim_DarkInvader_Jump"));
-	if (AU_AnimJumpDark.Succeeded()) { a_JumpDark = AU_AnimJumpDark.Object; }
+
+
 	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimMoveForwardDark(TEXT("/Game/Animations/Anim_DarkInvader_MoveForward"));
 	if (AU_AnimMoveForwardDark.Succeeded()) { a_MoveForwardDark = AU_AnimMoveForwardDark.Object; }
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimMoveBackwardDark(TEXT("/Game/Animations/Anim_DarkInvader_MoveBackward"));
+	if (AU_AnimMoveBackwardDark.Succeeded()) { a_MoveBackwardDark = AU_AnimMoveBackwardDark.Object; }
 
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimJumpDark(TEXT("/Game/Animations/Anim_DarkInvader_Jump"));
+	if (AU_AnimJumpDark.Succeeded()) { a_JumpDark = AU_AnimJumpDark.Object; }
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimJumpForwardDark(TEXT("/Game/Animations/Anim_DarkInvader_JumpForward"));
+	if (AU_AnimJumpForwardDark.Succeeded()) { a_JumpForwardDark = AU_AnimJumpForwardDark.Object; }
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimJumpBackwardDark(TEXT("/Game/Animations/Anim_DarkInvader_JumpBackward"));
+	if (AU_AnimJumpBackwardDark.Succeeded()) { a_JumpBackwardDark = AU_AnimJumpBackwardDark.Object; }
+
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimSelfStabDark(TEXT("/Game/Animations/Anim_DarkInvader_SelfStab"));
+	if (AU_AnimSelfStabDark.Succeeded()) { a_SelfStabDark = AU_AnimSelfStabDark.Object; }
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimTakeDamageDark(TEXT("/Game/Animations/Anim_DarkInvader_TakeDamage"));
+	if (AU_AnimTakeDamageDark.Succeeded()) { a_TakeDamageDark = AU_AnimTakeDamageDark.Object; }
 }
 
 // Called when the game starts or when spawned
@@ -73,7 +89,7 @@ void APlayerSpace::PlayCharacterAnimation(ABaseCharacter* a_character, EAnimatio
 {
 	if (a_character)
 	{
-		ECharacterType Type = a_character->GetCharacterType();
+		const ECharacterType Type = a_character->GetCharacterType();
 		switch (animType)
 		{
 			case Attack:
@@ -88,14 +104,28 @@ void APlayerSpace::PlayCharacterAnimation(ABaseCharacter* a_character, EAnimatio
 			case MoveForward:
 				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_MoveForwardDark, false); }
 				break;
-			case NoAnim:
-				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->Stop(); }
+			case MoveBackward:
+				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_MoveBackwardDark, false); }
+				break;
+			case JumpForward:
+				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_JumpForwardDark, false); }
+				break;
+			case JumpBackWard:
+				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_JumpBackwardDark, false); }
+				break;
+			case SelfStab:
+				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_SelfStabDark, false); }
+				break;
+			case EAnimationType::TakeDamage:
+				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_TakeDamageDark, false); }
+				break;
+			case Idle:
+				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_IdleDark, false); }
 				break;
 			default: 
 				break;
 		}
 	}
-
 }
 
 bool APlayerSpace::CheckPlayerVerticalLayer()
