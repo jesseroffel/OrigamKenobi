@@ -218,6 +218,7 @@ void ABaseCharacter::KeyUp()
 {
 	if (!bJumping && !bVerticalLocked)
 	{
+		pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::Jump);
 		bJumping = true;
 		bVerticalLocked = true;
 		bCheckJumpTimer = true;
@@ -266,6 +267,7 @@ void ABaseCharacter::KeyRight()
 
 void ABaseCharacter::ResetToBottom()
 {
+	pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::NoAnim);
 	bVerticalReset = true;
 	bMovementLocked = true;
 	bCheckJumpTimer = false;
@@ -292,7 +294,8 @@ void ABaseCharacter::SetModelVisibleYoga()
 {
 	SM_Yoga->ToggleVisibility();
 	SM_Yoga->GetAttachmentRoot()->SetVisibility(false, false);
-	CharacterName = "Master Yoga";
+	CharacterName = "Dark Invader";
+	CharacterType = DarkInvader;
 	vCharacterLocation = this->GetActorLocation();
 }
 
@@ -300,7 +303,8 @@ void ABaseCharacter::SetModelVisibleVader()
 {
 	SK_DarkInvader->ToggleVisibility();
 	SK_DarkInvader->GetAttachmentRoot()->SetVisibility(false, false);
-	CharacterName = "Dark Invader";
+	CharacterName = "Master Yoga";
+	CharacterType = YogaMaster;
 	vCharacterLocation = this->GetActorLocation();
 }
 
@@ -331,6 +335,7 @@ void ABaseCharacter::MoveLeft()
 		bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, false, 1);
 		if (check)
 		{
+			pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::MoveForward);
 			bMoving = true;
 			bMovementLocked = true;
 			bVerticalLocked = true;
@@ -362,6 +367,7 @@ void ABaseCharacter::MoveRight()
 		bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, true);
 		if (check)
 		{
+			pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::MoveForward);
 			bMoving = true;
 			bMovementLocked = true;
 			bVerticalLocked = true;
@@ -388,8 +394,11 @@ void ABaseCharacter::MoveRight()
 
 void ABaseCharacter::SideAttack()
 {
+	bSelfHit = pPlayerSpace->HitMySelf(this, bRightDirectionPressed);
+	//if (bSelfHit) { GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "SelfHit!");}
 	if (!bAttacking && !bHorizontalLocked && !bVerticalLocked)
 	{
+		pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::Attack);
 		bAttacking = true;
 		bMovementLocked = true;
 		bVerticalLocked = true;
@@ -409,7 +418,8 @@ void ABaseCharacter::BlockAttack()
 {
 	if (!bBlocking && !bHorizontalLocked && !bVerticalLocked)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "BLOCK attack!");
+		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "BLOCK attack!");
+		pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::Block);
 		bBlocking = true;
 		bAttackable = false;
 		bHorizontalLocked = true;
@@ -630,6 +640,7 @@ void ABaseCharacter::CheckPlayerBlocking(float const fWorldTime)
 	{
 		if (bCheckBlockTimer && fWorldTime > fBlockTimer)
 		{
+			pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::NoAnim);
 			bBlocking = false;
 			bAttackable = true;
 			bMovementLocked = false;

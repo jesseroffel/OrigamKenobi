@@ -36,7 +36,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerMovement")
 		APlayerSpace* pPlayerSpace = nullptr;
 
-		TArray<ABaseCharacter*> aa_Characters;
+	TArray<ABaseCharacter*> aa_Characters;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameSetup")
 		int i_PlayerCount = 1;
 };

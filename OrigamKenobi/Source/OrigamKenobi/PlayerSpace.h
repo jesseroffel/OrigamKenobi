@@ -5,7 +5,20 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BaseCharacter.h"
+#include "Animation/AnimSequence.h"
 #include "PlayerSpace.generated.h"
+
+
+UENUM()
+enum EAnimationType
+{
+	NoAnim			UMETA(DisplayName = "NoAnim"),
+	Attack			UMETA(DisplayName = "Attack"),
+	Block			UMETA(DisplayName = "Block"),
+	Jump			UMETA(DisplayName = "Jump"),
+	MoveForward     UMETA(DisplayName = "MoveForward")
+};
+
 
 UCLASS()
 class ORIGAMKENOBI_API APlayerSpace : public AActor
@@ -17,6 +30,8 @@ public:
 	APlayerSpace();
 
 	bool IsHitDirectionLeft(ABaseCharacter* a_CharacterWhoCalled = nullptr) const;
+	void PlayCharacterAnimation(ABaseCharacter* a_character = nullptr, EAnimationType animType = NoAnim) const;
+	bool HitMySelf(ABaseCharacter* a_Player = nullptr, bool a_RightDirectionPressed = false);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -36,6 +51,11 @@ protected:
 
 	bool CheckMovement(int left, int right, int amount);
 
+	//Dark Invader animations
+	UAnimationAsset* a_AttackDark = nullptr;
+	UAnimationAsset* a_BlockDark = nullptr;
+	UAnimationAsset* a_JumpDark = nullptr;
+	UAnimationAsset* a_MoveForwardDark = nullptr; 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

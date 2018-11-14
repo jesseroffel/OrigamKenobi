@@ -2,6 +2,8 @@
 
 #include "PlayerSpace.h"
 #include "Engine/Engine.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "ConstructorHelpers.h"
 
 
 // Sets default values
@@ -9,6 +11,16 @@ APlayerSpace::APlayerSpace()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	//Dark invader animations
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimAttackDark(TEXT("/Game/Animations/Anim_DarkInvader_Attack"));
+	if (AU_AnimAttackDark.Succeeded()) { a_AttackDark = AU_AnimAttackDark.Object; }
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimBlockDark(TEXT("/Game/Animations/Anim_DarkInvader_Block"));
+	if (AU_AnimBlockDark.Succeeded()) { a_BlockDark = AU_AnimBlockDark.Object; }
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimJumpDark(TEXT("/Game/Animations/Anim_DarkInvader_Jump"));
+	if (AU_AnimJumpDark.Succeeded()) { a_JumpDark = AU_AnimJumpDark.Object; }
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimMoveForwardDark(TEXT("/Game/Animations/Anim_DarkInvader_MoveForward"));
+	if (AU_AnimMoveForwardDark.Succeeded()) { a_MoveForwardDark = AU_AnimMoveForwardDark.Object; }
 
 }
 
@@ -35,6 +47,19 @@ bool APlayerSpace::CheckMovement(int left, int right, int amount)
 	return (left += amount) != right;
 }
 
+bool APlayerSpace::HitMySelf(ABaseCharacter* a_Player, bool a_RightDirectionPressed)
+{
+	if (!a_Player) { return false; }
+	if (a_Player == PlayerOne)
+	{
+		if (a_RightDirectionPressed) { return iP1BlockUnit > iP2BlockUnit; }
+		return iP1BlockUnit < iP2BlockUnit;
+	}
+	if (a_RightDirectionPressed) { return iP2BlockUnit > iP1LevelUnit; }
+	return iP2BlockUnit < iP1BlockUnit;
+}
+
+
 bool APlayerSpace::IsHitDirectionLeft(ABaseCharacter* a_CharacterWhoCalled) const
 {
 	if (a_CharacterWhoCalled == nullptr) { return false; }
@@ -42,6 +67,35 @@ bool APlayerSpace::IsHitDirectionLeft(ABaseCharacter* a_CharacterWhoCalled) cons
 		return iP1BlockUnit > iP2BlockUnit;
 	}
 	return iP2BlockUnit > iP1BlockUnit; 
+}
+
+void APlayerSpace::PlayCharacterAnimation(ABaseCharacter* a_character, EAnimationType animType) const
+{
+	if (a_character)
+	{
+		ECharacterType Type = a_character->GetCharacterType();
+		switch (animType)
+		{
+			case Attack:
+				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_AttackDark, false); }
+				break;
+			case Block:
+				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_BlockDark, false); }
+				break;
+			case Jump:
+				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_JumpDark, false); }
+				break;
+			case MoveForward:
+				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_MoveForwardDark, false); }
+				break;
+			case NoAnim:
+				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->Stop(); }
+				break;
+			default: 
+				break;
+		}
+	}
+
 }
 
 bool APlayerSpace::CheckPlayerVerticalLayer()

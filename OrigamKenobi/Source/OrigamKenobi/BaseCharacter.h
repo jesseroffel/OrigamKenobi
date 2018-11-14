@@ -7,6 +7,14 @@
 #include "Components/BoxComponent.h"
 #include "BaseCharacter.generated.h"
 
+UENUM()
+enum ECharacterType
+{
+	UNSET				UMETA(DisplayName = "UNSET"),
+	YogaMaster			UMETA(DisplayName = "YogaMaster"),
+	DarkInvader			UMETA(DisplayName = "DarkInvader"),
+};
+
 class APlayerSpace;
 
 UCLASS()
@@ -18,9 +26,12 @@ public:
 	// Sets default values for this pawn's properties
 	ABaseCharacter();
 
+
 	UFUNCTION()
 		void OnSwordBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 
+	ECharacterType GetCharacterType() const { return CharacterType; }
+	USkeletalMeshComponent* GetSkeletalMeshDark() const { return SK_DarkInvader;}
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -28,9 +39,10 @@ protected:
 	APlayerController* ThisPlayerController = nullptr;
 	// Direction = LEFT == TRUE, RIGHT == FALSE
 	bool b_MirroredDirection = false;
+	bool bSelfHit = false;
 
 	APlayerSpace* pPlayerSpace = nullptr;
-
+	ECharacterType CharacterType = UNSET;
 	int iPlayerNumber = 0;
 
 	bool bMovementLocked = false;

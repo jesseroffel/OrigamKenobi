@@ -48,7 +48,8 @@ void AGameDirector::CreatePlayers()
 					P1->SetPlayerMovementController(pPlayerSpace);
 					P1->SignMyselfUpForMovement();
 				}
-				P1->SetModelVisibleVader();
+				//P1->SetModelVisibleVader();
+				P1->SetModelVisibleYoga();
 			}
 			else { UE_LOG(LogTemp, Warning, TEXT("Actor could not be spawned!")); }
 			//Player 2
@@ -65,7 +66,8 @@ void AGameDirector::CreatePlayers()
 					P2->SetPlayerMovementController(pPlayerSpace);
 					P2->SignMyselfUpForMovement();
 				}
-				P2->SetModelVisibleYoga();
+				//P2->SetModelVisibleYoga();
+				P2->SetModelVisibleVader();
 			}
 			else { UE_LOG(LogTemp, Warning, TEXT("Actor could not be spawned!")); }
 		}
