@@ -76,14 +76,21 @@ protected:
 	bool bSuccessfulHit = false;
 	float fCheckOverlapAttackTimer = 0.0f;
 
+	bool bStunned = false;
+	float fStunTimer = 0.0f;
+
 public:
 
 	UStaticMeshComponent* SphereVisual = nullptr;
 	UStaticMeshComponent* SM_Yoga = nullptr;
 	UStaticMeshComponent* SM_DarkInvader = nullptr;
+	USkeletalMeshComponent* SK_YogaMaster = nullptr;
+	USkeletalMeshComponent* SK_DarkInvader = nullptr;
 
 	UBoxComponent* CharacterHitBox = nullptr;
 	UBoxComponent* SwordHitBox = nullptr;
+
+	FString CharacterName = "NAME_ME_PLZ";
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -115,15 +122,19 @@ public:
 
 	void OverLapFunction();
 
-	bool GetAttackable();
+	bool GetAttackable() const;
 
 	void MoveLeft();
 	void MoveRight();
 
 	void CheckPlayerMove();
 	void CheckPlayerJump();
+	void CheckPlayerAttacking(float const fWorldTimer);
+	void CheckPlayerBlocking(float const fWorldTimer);
 
 	void SideAttack();
 	void BlockAttack();
-	void AttackHitMe();
+	void AttackHitMe(bool a_bLeftDirection = false);
+
+	void RemoveStun();
 };

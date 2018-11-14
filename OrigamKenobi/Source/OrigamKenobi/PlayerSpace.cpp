@@ -31,28 +31,22 @@ void APlayerSpace::BeginPlay()
 
 bool APlayerSpace::CheckMovement(int left, int right, int amount)
 {
-	if (left < right)
-	{
-		if ((left += amount) == right)
-		{
-			return false;
-		}
-		return true;
+	if (left < right) { return (left += amount) != right; }
+	return (left += amount) != right;
+}
+
+bool APlayerSpace::IsHitDirectionLeft(ABaseCharacter* a_CharacterWhoCalled) const
+{
+	if (a_CharacterWhoCalled == nullptr) { return false; }
+	if (a_CharacterWhoCalled == PlayerOne) {
+		return iP1BlockUnit > iP2BlockUnit;
 	}
-	else
-	{
-		if ((left += amount) == right)
-		{
-			return false;
-		}
-		return true;
-	}
+	return iP2BlockUnit > iP1BlockUnit; 
 }
 
 bool APlayerSpace::CheckPlayerVerticalLayer()
 {
-	if (iP1LevelUnit == iP2LevelUnit) { return true; }
-	return false;
+	return iP1LevelUnit == iP2LevelUnit;
 }
 
 // Called every frame

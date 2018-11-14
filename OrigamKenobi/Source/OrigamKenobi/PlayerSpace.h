@@ -16,6 +16,7 @@ public:
 	// Sets default values for this actor's properties
 	APlayerSpace();
 
+	bool IsHitDirectionLeft(ABaseCharacter* a_CharacterWhoCalled = nullptr) const;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -34,6 +35,7 @@ protected:
 	ABaseCharacter* PlayerTwo = nullptr;
 
 	bool CheckMovement(int left, int right, int amount);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

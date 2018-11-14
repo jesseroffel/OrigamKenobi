@@ -1,15 +1,17 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "BaseCharacter.h"
+#include "PlayerSpace.h"
+#include "Engine/World.h"
+#include "Engine/Engine.h"
+#include "Engine/SkeletalMesh.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "ConstructorHelpers.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "ConstructorHelpers.h"
-#include "Engine/World.h"
-#include "PlayerSpace.h"
-#include "Engine/Engine.h"
 #include "Components/BoxComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 
 // Sets default values
@@ -39,26 +41,9 @@ ABaseCharacter::ABaseCharacter()
 	SwordHitBox->SetRelativeLocation(FVector(0.0f, 20.0f, 0.0f));
 	SwordHitBox->OnComponentBeginOverlap.AddDynamic(this, &ABaseCharacter::OnSwordBeginOverlap);
 	SwordHitBox->bGenerateOverlapEvents = false;
-
 	SwordHitBox->BodyInstance.SetCollisionProfileName("OverlapAll");
-	//SwordHitBox->bGenerateOverlapEvents = true;
-	//SetRootComponent(BladeComponent);
 
-	//SwordHitBox->OnComponentBeginOverlap.AddDynamic(this, &ABaseCharacter::OnBeginOverlap);
-
-
-	//Create and poisition a mesh component so we can see where our sphere is
-	SphereVisual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualRepresentation"));
-	SphereVisual->SetupAttachment(RootComponent);
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereVisualAsset(TEXT("/Game/StarterContent/Shapes/Shape_Sphere.Shape_Sphere"));
-	if (SphereVisualAsset.Succeeded())
-	{
-		SphereVisual->SetStaticMesh(SphereVisualAsset.Object);
-		SphereVisual->SetRelativeLocation(FVector(0.0f, 0.0f, -35.0f));
-		SphereVisual->SetWorldScale3D(FVector(0.15f));
-	}
-
-	//YogaMaster
+	//YogaMaster static mesh
 	SM_Yoga = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualRepresentationYoda"));
 	SM_Yoga->SetupAttachment(RootComponent);
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_YogaMasterAsset(TEXT("/Game/Models/SK_MasterYoga"));
@@ -69,7 +54,18 @@ ABaseCharacter::ABaseCharacter()
 		SM_Yoga->SetWorldScale3D(FVector(0.15f));
 	}
 
-	//DarkInvader
+	//DarkInvader Skeletal mesh
+	SK_DarkInvader = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("VisualRepresentationDarkInvader"));
+	SK_DarkInvader->SetupAttachment(RootComponent);
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> DarkInvaderAsset(TEXT("/Game/Models/SK_DarkInvader"));
+	if (DarkInvaderAsset.Succeeded())
+	{
+		SK_DarkInvader->SetSkeletalMesh(DarkInvaderAsset.Object);
+		SK_DarkInvader->SetRelativeLocation(FVector(0.0f, 0.0f, -35.0f));
+		SK_DarkInvader->SetWorldScale3D(FVector(0.15f));
+	}
+	/*
+	//DarkInvader static mesh
 	SM_DarkInvader = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualRepresentationDarkInvader"));
 	SM_DarkInvader->SetupAttachment(RootComponent);
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> DarkInvaderAsset(TEXT("/Game/Models/SK_DarkInvader"));
@@ -80,6 +76,7 @@ ABaseCharacter::ABaseCharacter()
 		SM_DarkInvader->SetWorldScale3D(FVector(0.15f));
 		//SM_DarkInvader->bVisible = false;
 	}
+	*/
 
 	PrimaryActorTick.bCanEverTick = true;
 }
@@ -93,9 +90,20 @@ void ABaseCharacter::OnSwordBeginOverlap(UPrimitiveComponent* OverlappedComponen
 		ABaseCharacter* OtherCharacter = Cast<ABaseCharacter>(OtherActor);
 		if (OtherComp->GetName() == "CharacterHitbox" && OtherCharacter->GetAttackable())
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "Player Hit!");
+			FString hitText = "";
+			if (pPlayerSpace->IsHitDirectionLeft(this))
+			{
+				hitText = CharacterName + " got hit from the right!";
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, hitText);
+				OtherCharacter->AttackHitMe(true);
+			}
+			else
+			{
+				hitText = CharacterName + " got hit from the left!";
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, hitText);
+				OtherCharacter->AttackHitMe(false);
+			}
 			bSuccessfulHit = true;
-			OtherCharacter->AttackHitMe();
 		}
 	}
 }
@@ -190,53 +198,12 @@ void ABaseCharacter::Tick(float DeltaTime)
 
 	CheckPlayerMove();
 	CheckPlayerJump();
+	CheckPlayerAttacking(fWorldTime);
+	CheckPlayerBlocking(fWorldTime);
 
-	if (bAttacking)
+	if (bStunned)
 	{
-		if (bCheckOverlapAttack)
-		{
-			if (fWorldTime <= fCheckOverlapAttackTimer)
-			{
-				if (bSuccessfulHit)
-				{
-					bSuccessfulHit = false;
-					bCheckOverlapAttack = false;
-
-					SwordHitBox->bGenerateOverlapEvents = false;
-					SwordHitBox->SetBoxExtent(FVector(16.0f, 32.0f, 8.0f));
-				}
-			} else
-			{
-				bCheckOverlapAttack = false;
-				SwordHitBox->bGenerateOverlapEvents = false;
-			}
-		} else
-		{
-			if (bCheckAttackTimer && fWorldTime > fAttackingTimer)
-			{
-				bAttacking = false;
-				bMovementLocked = false;
-				bVerticalLocked = false;
-				bCheckAttackTimer = false;
-				SwordHitBox->SetBoxExtent(FVector(16.0f, 32.0f, 8.0f));
-				SwordHitBox->SetHiddenInGame(true);
-			}
-		}
-	}
-
-	if (bBlocking)
-	{
-		if (bCheckBlockTimer && fWorldTime > fBlockTimer)
-		{
-			bBlocking = false;
-			bAttackable = true;
-			bMovementLocked = false;
-			bHorizontalLocked = false;
-			bVerticalLocked = false;
-			bCheckBlockTimer = false;
-			bCheckMoveTimer = false;
-			CharacterHitBox->SetHiddenInGame(true);
-		}
+		if (fWorldTime > fStunTimer) { RemoveStun(); }
 	}
 
 	//Reset buttons
@@ -302,6 +269,7 @@ void ABaseCharacter::ResetToBottom()
 	bVerticalReset = true;
 	bMovementLocked = true;
 	bCheckJumpTimer = false;
+	bJumpingPressed = false;
 	vGoingLocation = vCharacterLocation;
 	//vGoingLocation.Z -= VerticalMovement;
 
@@ -313,7 +281,6 @@ void ABaseCharacter::ResetToBottom()
 void ABaseCharacter::Attack()
 {
 	bActionButtonPressed = true;
-	
 }
 
 void ABaseCharacter::Special()
@@ -323,19 +290,17 @@ void ABaseCharacter::Special()
 
 void ABaseCharacter::SetModelVisibleYoga()
 {
-	SphereVisual->ToggleVisibility();
-	SphereVisual->GetAttachmentRoot()->SetVisibility(false, false);
-	SM_DarkInvader->ToggleVisibility();
-	SM_DarkInvader->GetAttachmentRoot()->SetVisibility(false, false);
+	SM_Yoga->ToggleVisibility();
+	SM_Yoga->GetAttachmentRoot()->SetVisibility(false, false);
+	CharacterName = "Master Yoga";
 	vCharacterLocation = this->GetActorLocation();
 }
 
 void ABaseCharacter::SetModelVisibleVader()
 {
-	SphereVisual->ToggleVisibility();
-	SphereVisual->GetAttachmentRoot()->SetVisibility(false, false);
-	SM_Yoga->ToggleVisibility();
-	SM_Yoga->GetAttachmentRoot()->SetVisibility(false, false);
+	SK_DarkInvader->ToggleVisibility();
+	SK_DarkInvader->GetAttachmentRoot()->SetVisibility(false, false);
+	CharacterName = "Dark Invader";
 	vCharacterLocation = this->GetActorLocation();
 }
 
@@ -344,7 +309,7 @@ void ABaseCharacter::SetDirection(bool a_bState)
 	b_MirroredDirection = a_bState;
 
 	if (!b_MirroredDirection)
-		RootComponent->SetWorldRotation(FRotator(0.f, (360.0f - CharacterRotation), 0.0f));
+		RootComponent->SetWorldRotation(FRotator(0.f, 360.0f - CharacterRotation, 0.0f));
 	else
 		RootComponent->SetWorldRotation(FRotator(0.f, CharacterRotation, 0.0f));
 }
@@ -354,7 +319,7 @@ void ABaseCharacter::OverLapFunction()
 
 }
 
-bool ABaseCharacter::GetAttackable()
+bool ABaseCharacter::GetAttackable() const
 {
 	return bAttackable;
 }
@@ -369,6 +334,7 @@ void ABaseCharacter::MoveLeft()
 			bMoving = true;
 			bMovementLocked = true;
 			bVerticalLocked = true;
+			bJumpingPressed = false;
 			pPlayerSpace->MovePlayerHorizontal(this, false, 1);
 
 			vGoingLocation = vCharacterLocation;
@@ -399,6 +365,7 @@ void ABaseCharacter::MoveRight()
 			bMoving = true;
 			bMovementLocked = true;
 			bVerticalLocked = true;
+			bJumpingPressed = false;
 			pPlayerSpace->MovePlayerHorizontal(this, true, 1);
 			vGoingLocation = vCharacterLocation;
 			vGoingLocation.X += HorizontalMovement;
@@ -423,7 +390,6 @@ void ABaseCharacter::SideAttack()
 {
 	if (!bAttacking && !bHorizontalLocked && !bVerticalLocked)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "Side attack!");
 		bAttacking = true;
 		bMovementLocked = true;
 		bVerticalLocked = true;
@@ -457,8 +423,44 @@ void ABaseCharacter::BlockAttack()
 	}
 }
 
-void ABaseCharacter::AttackHitMe()
+void ABaseCharacter::AttackHitMe(bool a_bLeftDirection)
 {
+	// Direction = where hit character should go
+	bStunned = true;
+	fStunTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.60f;
+	bMovementLocked = true;
+	bVerticalLocked = true;
+	if (a_bLeftDirection)
+	{
+		pPlayerSpace->MovePlayerHorizontal(this, false, 1);
+		FString pos1 = "P1: " + FString::FromInt(pPlayerSpace->getP1Block());
+		pos1 += " P2: " + FString::FromInt(pPlayerSpace->getP2Block());
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, pos1);
+		vGoingLocation = vCharacterLocation;
+		vGoingLocation.X -= HorizontalMovement;
+	}
+	else
+	{
+		pPlayerSpace->MovePlayerHorizontal(this, true, 1);
+		FString pos1 = "P1: " + FString::FromInt(pPlayerSpace->getP1Block());
+		pos1 += " P2: " + FString::FromInt(pPlayerSpace->getP2Block());
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, pos1);
+		vGoingLocation = vCharacterLocation;
+		vGoingLocation.X += HorizontalMovement;
+	}
+
+	FLatentActionInfo LatentInfo;
+	LatentInfo.CallbackTarget = this;
+	UKismetSystemLibrary::MoveComponentTo(this->GetRootComponent(), vGoingLocation, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
+}
+
+void ABaseCharacter::RemoveStun()
+{
+	bStunned = false;
+	bMoving = false;
+	bMovementLocked = false;
+	bVerticalLocked = false;
+	vCharacterLocation = this->GetActorLocation();
 }
 
 void ABaseCharacter::CheckPlayerMove()
@@ -473,8 +475,8 @@ void ABaseCharacter::CheckPlayerMove()
 			bVerticalLocked = false;
 			vCharacterLocation = this->GetActorLocation();
 
-			FString text = FString::FromInt(this->GetActorLocation().X);
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
+			//FString text = FString::FromInt(this->GetActorLocation().X);
+			//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
 		}
 	}
 }
@@ -506,7 +508,7 @@ void ABaseCharacter::CheckPlayerJump()
 				}
 				else
 				{
-					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "OCCUPIED!");
+					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "Space is already occupied!");
 					ResetToBottom();
 				}
 			}
@@ -526,7 +528,7 @@ void ABaseCharacter::CheckPlayerJump()
 				bMovementLocked = false;
 				bVerticalLocked = false;
 				bHorizontalLocked = false;
-
+				bJumpingPressed = false;
 				bCheckMoveTimer = false;
 
 				bAttackable = true;
@@ -534,8 +536,8 @@ void ABaseCharacter::CheckPlayerJump()
 				vCharacterLocation = this->GetActorLocation();
 				pPlayerSpace->MovePlayerVertical(this, false);
 
-				FString text = FString::FromInt(this->GetActorLocation().Z);
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
+				//FString text = FString::FromInt(this->GetActorLocation().Z);
+				//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
 			}
 		}
 
@@ -579,9 +581,63 @@ void ABaseCharacter::CheckPlayerJump()
 
 				vCharacterLocation = this->GetActorLocation();
 
-				FString text = FString::FromInt(this->GetActorLocation().Z);
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
+				//FString text = FString::FromInt(this->GetActorLocation().Z);
+				//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
 			}
+		}
+	}
+}
+
+void ABaseCharacter::CheckPlayerAttacking(float const fWorldTime)
+{
+	if (bAttacking)
+	{
+		if (bCheckOverlapAttack)
+		{
+			if (fWorldTime <= fCheckOverlapAttackTimer)
+			{
+				if (bSuccessfulHit)
+				{
+					bSuccessfulHit = false;
+					bCheckOverlapAttack = false;
+
+					SwordHitBox->bGenerateOverlapEvents = false;
+					SwordHitBox->SetBoxExtent(FVector(16.0f, 32.0f, 8.0f));
+				}
+			} else
+			{
+				bCheckOverlapAttack = false;
+				SwordHitBox->bGenerateOverlapEvents = false;
+			}
+		} else
+		{
+			if (bCheckAttackTimer && fWorldTime > fAttackingTimer)
+			{
+				bAttacking = false;
+				bMovementLocked = false;
+				bVerticalLocked = false;
+				bCheckAttackTimer = false;
+				SwordHitBox->SetBoxExtent(FVector(16.0f, 32.0f, 8.0f));
+				SwordHitBox->SetHiddenInGame(true);
+			}
+		}
+	}
+}
+
+void ABaseCharacter::CheckPlayerBlocking(float const fWorldTime)
+{
+	if (bBlocking)
+	{
+		if (bCheckBlockTimer && fWorldTime > fBlockTimer)
+		{
+			bBlocking = false;
+			bAttackable = true;
+			bMovementLocked = false;
+			bHorizontalLocked = false;
+			bVerticalLocked = false;
+			bCheckBlockTimer = false;
+			bCheckMoveTimer = false;
+			CharacterHitBox->SetHiddenInGame(true);
 		}
 	}
 }
