@@ -8,10 +8,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "ConstructorHelpers.h"
-#include "Components/SphereComponent.h"
-#include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/SphereComponent.h"
 
 
 // Sets default values
@@ -44,14 +43,14 @@ ABaseCharacter::ABaseCharacter()
 	SwordHitBox->BodyInstance.SetCollisionProfileName("OverlapAll");
 
 	//YogaMaster static mesh
-	SM_Yoga = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualRepresentationYoda"));
-	SM_Yoga->SetupAttachment(RootComponent);
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_YogaMasterAsset(TEXT("/Game/Models/SK_MasterYoga"));
+	SK_YogaMaster = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("VisualRepresentationYoda"));
+	SK_YogaMaster->SetupAttachment(RootComponent);
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SM_YogaMasterAsset(TEXT("/Game/Models/SK_MasterYoga"));
 	if (SM_YogaMasterAsset.Succeeded())
 	{
-		SM_Yoga->SetStaticMesh(SM_YogaMasterAsset.Object);
-		SM_Yoga->SetRelativeLocation(FVector(0.0f, 0.0f, -30.0f));
-		SM_Yoga->SetWorldScale3D(FVector(0.15f));
+		SK_YogaMaster->SetSkeletalMesh(SM_YogaMasterAsset.Object);
+		SK_YogaMaster->SetRelativeLocation(FVector(0.0f, 0.0f, -30.0f));
+		SK_YogaMaster->SetWorldScale3D(FVector(0.15f));
 	}
 
 	//DarkInvader Skeletal mesh
@@ -64,19 +63,6 @@ ABaseCharacter::ABaseCharacter()
 		SK_DarkInvader->SetRelativeLocation(FVector(0.0f, 0.0f, -35.0f));
 		SK_DarkInvader->SetWorldScale3D(FVector(0.15f));
 	}
-	/*
-	//DarkInvader static mesh
-	SM_DarkInvader = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualRepresentationDarkInvader"));
-	SM_DarkInvader->SetupAttachment(RootComponent);
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> DarkInvaderAsset(TEXT("/Game/Models/SK_DarkInvader"));
-	if (DarkInvaderAsset.Succeeded())
-	{
-		SM_DarkInvader->SetStaticMesh(DarkInvaderAsset.Object);
-		SM_DarkInvader->SetRelativeLocation(FVector(0.0f, 0.0f, -35.0f));
-		SM_DarkInvader->SetWorldScale3D(FVector(0.15f));
-		//SM_DarkInvader->bVisible = false;
-	}
-	*/
 
 	PrimaryActorTick.bCanEverTick = true;
 }
@@ -292,8 +278,8 @@ void ABaseCharacter::Special()
 
 void ABaseCharacter::SetModelVisibleYoga()
 {
-	SM_Yoga->ToggleVisibility();
-	SM_Yoga->GetAttachmentRoot()->SetVisibility(false, false);
+	SK_YogaMaster->ToggleVisibility();
+	SK_YogaMaster->GetAttachmentRoot()->SetVisibility(false, false);
 	CharacterName = "Dark Invader";
 	CharacterType = DarkInvader;
 	vCharacterLocation = this->GetActorLocation();

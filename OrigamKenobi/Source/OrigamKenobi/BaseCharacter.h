@@ -94,8 +94,6 @@ protected:
 public:
 
 	UStaticMeshComponent* SphereVisual = nullptr;
-	UStaticMeshComponent* SM_Yoga = nullptr;
-	UStaticMeshComponent* SM_DarkInvader = nullptr;
 	USkeletalMeshComponent* SK_YogaMaster = nullptr;
 	USkeletalMeshComponent* SK_DarkInvader = nullptr;
 
