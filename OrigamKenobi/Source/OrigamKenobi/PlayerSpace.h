@@ -43,7 +43,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LevelBoundries")
 	int iBlockMinBoundry = -1;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LevelBoundries")
-	int iBlockMaxBoundry = 16;
+	int iBlockMaxBoundry = 17;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LevelBoundries")
 	int iP1StartX = 5;

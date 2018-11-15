@@ -90,13 +90,13 @@ FVector AGameDirector::RespawnThisPlayer(ABaseCharacter* a_character)
 		// Player One
 		if (a_character == aa_Characters[0])
 		{
-			if (P1 > spawnPoint1 && P1 > spawnPoint2 && P2 < spawnPoint1) { Selected = spawnPoint2; } else { Selected = spawnPoint1; }
-			if (P1 < spawnPoint1 && P1 < spawnPoint2 && P2 > spawnPoint1) { Selected = spawnPoint1; } else { Selected = spawnPoint2; }
+			if (P1 >= spawnPoint1 && P1 >= spawnPoint2 && P2 <= spawnPoint1) { Selected = spawnPoint2; } else { Selected = spawnPoint1; }
+			if (P1 <= spawnPoint1 && P1 <= spawnPoint2 && P2 >= spawnPoint1) { Selected = spawnPoint1; } else { Selected = spawnPoint2; }
 			if (Selected == spawnPoint1) { return aa_pPlayer1Spawn->GetActorLocation(); } 
 			return aa_pPlayer2Spawn->GetActorLocation();
 		}
-		if (P2 > spawnPoint1 && P2 > spawnPoint2 && P1 < spawnPoint1) { Selected = spawnPoint2; } else { Selected = spawnPoint1; }
-		if (P2 < spawnPoint1 && P2 < spawnPoint2 && P1 > spawnPoint1) { Selected = spawnPoint1; } else { Selected = spawnPoint2; }
+		if (P2 >= spawnPoint1 && P2 >= spawnPoint2 && P1 <= spawnPoint1) { Selected = spawnPoint2; } else { Selected = spawnPoint1; }
+		if (P2 <= spawnPoint1 && P2 <= spawnPoint2 && P1 >= spawnPoint1) { Selected = spawnPoint1; } else { Selected = spawnPoint2; }
 		if (Selected == spawnPoint1) { return aa_pPlayer1Spawn->GetActorLocation(); } 
 		return aa_pPlayer2Spawn->GetActorLocation();
 	}
@@ -107,6 +107,10 @@ FVector AGameDirector::RespawnThisPlayer(ABaseCharacter* a_character)
 void AGameDirector::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	for (ABaseCharacter* element : aa_Characters)
+	{
+		if (element->GetHealth() <= 0){	element->Respawn();}
+	}
 
 }
 

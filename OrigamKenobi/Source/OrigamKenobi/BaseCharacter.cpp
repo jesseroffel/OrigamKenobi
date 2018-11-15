@@ -43,6 +43,15 @@ ABaseCharacter::ABaseCharacter()
 	SwordHitBox->bGenerateOverlapEvents = false;
 	SwordHitBox->BodyInstance.SetCollisionProfileName("OverlapAll");
 
+	SpecialHitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SpecialHitBox"));
+	SpecialHitBox->SetupAttachment(RootComponent);
+	SpecialHitBox->SetBoxExtent(FVector(16.0f, 48.0f, 8.0f));
+	SpecialHitBox->SetRelativeLocation(FVector(32.0f, 48.0f, 0.0f));
+	SpecialHitBox->SetRelativeRotation(FRotator(0.0f, -47.5f, 0.0f));
+	SpecialHitBox->OnComponentBeginOverlap.AddDynamic(this, &ABaseCharacter::OnSpecialBeginOverlap);
+	SpecialHitBox->bGenerateOverlapEvents = false;
+	SpecialHitBox->BodyInstance.SetCollisionProfileName("OverlapAll");
+
 	//YogaMaster static mesh
 	SK_YogaMaster = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("VisualRepresentationYoda"));
 	SK_YogaMaster->SetupAttachment(RootComponent);
@@ -66,7 +75,6 @@ ABaseCharacter::ABaseCharacter()
 	}
 
 	PrimaryActorTick.bCanEverTick = true;
-	
 }
 
 
@@ -82,6 +90,31 @@ void ABaseCharacter::OnSwordBeginOverlap(UPrimitiveComponent* OverlappedComponen
 			{ OtherCharacter->AttackHitMe(true); }
 			else { OtherCharacter->AttackHitMe(false); }
 			bSuccessfulHit = true;
+			AddSpecialPoints(5);
+		} else
+		{
+			if (OtherComp->GetName() == "CharacterHitbox" && !OtherCharacter->GetAttackable())
+			{
+				bStunned = true;
+				fStunTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.75f;
+				//pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::StunHitThing);
+				bMovementLocked = true;
+				bVerticalLocked = true;
+			}
+		}
+	}
+}
+
+void ABaseCharacter::OnSpecialBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && (OtherActor != this) && OtherComp)
+	{
+		ABaseCharacter* OtherCharacter = Cast<ABaseCharacter>(OtherActor);
+		if (OtherComp->GetName() == "CharacterHitbox" && OtherCharacter->GetAttackable())
+		{
+			const FString text = OtherCharacter->GetCharacterName() + " got hit by " + CharacterName;
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
 		}
 	}
 }
@@ -99,6 +132,7 @@ void ABaseCharacter::SetFallingState()
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	fSpecialAddWait = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 5.0f;
 }
 
 // Called to bind functionality to input
@@ -180,6 +214,25 @@ void ABaseCharacter::Tick(float DeltaTime)
 		}
 	}
 
+	//Special Bar
+	if (fWorldTime > fSpecialAddWait)
+	{
+		AddSpecialPoints(1);
+		fSpecialAddWait = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 1.0f;
+	}
+	//Special Checks
+	if (bSpecialPressed)
+	{
+		if (!bMovementLocked && !bVerticalLocked && !bHorizontalLocked && !bAttacking && !bSpecialActivated)
+		{
+			if (iSpecial == 100)
+			{
+				bSpecialActivated = true;
+				ActivateSpecial();
+			}
+		}
+	}
+
 	if (bActionButtonPressed && !bDirectionPressed) { BlockAttack(); }
 	if (bFalling)
 	{
@@ -212,6 +265,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 	bActionButtonPressed = false;
 	bDirectionPressed = false;
 	bCombinationTriggered = false;
+	bSpecialPressed = false;
 }
 
 
@@ -296,12 +350,20 @@ void ABaseCharacter::Respawn()
 	LatentInfo.CallbackTarget = this;
 	UKismetSystemLibrary::MoveComponentTo(RootComponent, location, this->GetActorRotation(), false, false, 0.0f, true, EMoveComponentAction::Type::Move, LatentInfo);
 
+	if (iLives > 0)
+	{
+		iLives--;
+		iHealth = 100;
+	}
+	FString text = CharacterName + " Lives: " + FString::FromInt(iLives);
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
 	bFalling = false;
 	bMovementLocked = false;
 	bVerticalLocked = false;
 	bAttackable = true;
 	pPlayerSpace->MovePlayerVertical(this, true);
 }
+
 
 void ABaseCharacter::Attack()
 {
@@ -310,7 +372,7 @@ void ABaseCharacter::Attack()
 
 void ABaseCharacter::Special()
 {
-
+	bSpecialPressed = true;
 }
 
 void ABaseCharacter::SetModelVisibleYoga()
@@ -368,12 +430,12 @@ void ABaseCharacter::MoveLeft()
 			vGoingLocation = vCharacterLocation;
 			vGoingLocation.X -= HorizontalMovement;
 
-			bCheckMoveTimer = false;
 
 			FLatentActionInfo LatentInfo;
 			LatentInfo.CallbackTarget = this;
 			UKismetSystemLibrary::MoveComponentTo(RootComponent, vGoingLocation, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
 		}
+		bCheckMoveTimer = false;
 	}
 
 	if (!bMovementLocked && bHorizontalLocked && !bVerticalReset && !bJumpingPressed)
@@ -403,12 +465,12 @@ void ABaseCharacter::MoveRight()
 			vGoingLocation = vCharacterLocation;
 			vGoingLocation.X += HorizontalMovement;
 
-			bCheckMoveTimer = false;
 
 			FLatentActionInfo LatentInfo;
 			LatentInfo.CallbackTarget = this;
 			UKismetSystemLibrary::MoveComponentTo(RootComponent, vGoingLocation, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
 		}
+		bCheckMoveTimer = false;
 	}
 
 	if (!bMovementLocked && bHorizontalLocked && !bVerticalReset && !bJumpingPressed)
@@ -436,11 +498,13 @@ void ABaseCharacter::SideAttack()
 
 		SwordHitBox->bGenerateOverlapEvents = true;
 		SwordHitBox->SetBoxExtent(FVector(16.0f, 32.15f, 8.0f));
-		//SwordHitBox->SetHiddenInGame(false);
 	}
 	if (bSelfHit)
 	{
 		pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::SelfStab);
+		iHealth -= 10;
+		FString text = CharacterName + " HP: " + FString::FromInt(iHealth);
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
 		bStunned = true;
 		fStunTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.60f;
 		bMovementLocked = true;
@@ -470,6 +534,9 @@ void ABaseCharacter::AttackHitMe(bool a_bLeftDirection)
 {
 	// Direction = where hit character should go
 	pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::TakeDamage);
+	iHealth -= 5;
+	FString text = CharacterName + " HP: " + FString::FromInt(iHealth);
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
 	bStunned = true;
 	fStunTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.60f;
 	bMovementLocked = true;
@@ -505,6 +572,30 @@ void ABaseCharacter::RemoveStun()
 	bMovementLocked = false;
 	bVerticalLocked = false;
 	vCharacterLocation = this->GetActorLocation();
+}
+
+void ABaseCharacter::AddSpecialPoints(int a_iAmount)
+{
+	if (iSpecial < iSpecialMax)
+	{
+		iSpecial += a_iAmount;
+		if (iSpecial > iSpecialMax) { iSpecial = iSpecialMax;}
+	}
+}
+
+void ABaseCharacter::ActivateSpecial()
+{
+	iSpecial = 0;
+	fSpecialAddWait = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 10.0f;
+	SpecialHitBox->SetBoxExtent(FVector(16.0f, 48.1f, 8.0f));
+	SpecialHitBox->bGenerateOverlapEvents = true;
+	SpecialHitBox->SetHiddenInGame(false);
+}
+
+void ABaseCharacter::DisableSpecial()
+{
+	SpecialHitBox->bGenerateOverlapEvents = false;
+	SpecialHitBox->SetHiddenInGame(true);
 }
 
 void ABaseCharacter::CheckPlayerMove()

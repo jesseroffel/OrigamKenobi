@@ -106,7 +106,7 @@ bool APlayerSpace::HitMySelf(ABaseCharacter* a_Player, bool a_RightDirectionPres
 		if (a_RightDirectionPressed) { return iP1BlockUnit > iP2BlockUnit; }
 		return iP1BlockUnit < iP2BlockUnit;
 	}
-	if (a_RightDirectionPressed) { return iP2BlockUnit > iP1LevelUnit; }
+	if (a_RightDirectionPressed) { return iP2BlockUnit > iP1BlockUnit; }
 	return iP2BlockUnit < iP1BlockUnit;
 }
 

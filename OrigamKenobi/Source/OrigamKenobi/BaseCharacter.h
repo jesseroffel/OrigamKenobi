@@ -29,15 +29,21 @@ public:
 
 	UFUNCTION()
 		void OnSwordBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+	UFUNCTION()
+		void OnSpecialBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 
 	ECharacterType GetCharacterType() const { return CharacterType; }
 	USkeletalMeshComponent* GetSkeletalMeshDark() const { return SK_DarkInvader; }
 	USkeletalMeshComponent* GetSkeletalMeshYoga() const { return SK_YogaMaster; }
 	void SetFallingState();
 	int GetPlayerNumber() const { return iPlayerNumber; }
+	void Respawn();
+	int GetHealth() { return iHealth; }
+	int GetSpecial() { return iSpecial; }
+	FString GetCharacterName() const { return CharacterName; }
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 	APlayerController* ThisPlayerController = nullptr;
 	// Direction = LEFT == TRUE, RIGHT == FALSE
@@ -47,6 +53,17 @@ protected:
 	APlayerSpace* pPlayerSpace = nullptr;
 	ECharacterType CharacterType = UNSET;
 	int iPlayerNumber = 0;
+
+	int iLives = 3;
+	int iHealth = 100;
+	int iSpecial = 100;
+	const int iSpecialMax = 100;
+	float fSpecialAddWait = 1.0f;
+	bool bSpecialPressed = false;
+	bool bSpecialActivated = false;
+	float fSpecialPunishTimer = 0.0f;
+	float fSpecialTimeToPunish = 5.0f;
+
 
 	bool bMovementLocked = false;
 	bool bMoving = false;
@@ -95,6 +112,8 @@ protected:
 
 	//Pit 
 	bool bFalling = false;
+	bool bMarkedForFalling = false;
+	float fMarkedForFallTimer = 0.0f;
 	bool bBottomReached = false;
 
 public:
@@ -105,6 +124,7 @@ public:
 
 	UBoxComponent* CharacterHitBox = nullptr;
 	UBoxComponent* SwordHitBox = nullptr;
+	UBoxComponent* SpecialHitBox = nullptr;
 
 	FString CharacterName = "NAME_ME_PLZ";
 
@@ -130,7 +150,6 @@ public:
 	void SetModelVisibleVader();
 
 	void ResetToBottom();
-	void Respawn();
 
 	void SetDirection(bool a_bState);
 
@@ -149,4 +168,9 @@ public:
 	void AttackHitMe(bool a_bLeftDirection = false);
 
 	void RemoveStun();
+
+	void AddSpecialPoints(int a_iAmount);
+
+	void ActivateSpecial();
+	void DisableSpecial();
 };
