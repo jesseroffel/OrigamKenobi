@@ -33,6 +33,8 @@ public:
 	ECharacterType GetCharacterType() const { return CharacterType; }
 	USkeletalMeshComponent* GetSkeletalMeshDark() const { return SK_DarkInvader; }
 	USkeletalMeshComponent* GetSkeletalMeshYoga() const { return SK_YogaMaster; }
+	void SetFallingState();
+	int GetPlayerNumber() const { return iPlayerNumber; }
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -79,7 +81,6 @@ protected:
 	bool bCombinationTriggered = false;
 
 	float fJumpTimer = 0.0f;
-	void ResetToBottom();
 
 	float HorizontalMovement = 50.0f;
 	float VerticalMovement = 62.5f;
@@ -91,6 +92,10 @@ protected:
 
 	bool bStunned = false;
 	float fStunTimer = 0.0f;
+
+	//Pit 
+	bool bFalling = false;
+	bool bBottomReached = false;
 
 public:
 
@@ -109,29 +114,25 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	void SetControllerIndex(int a_iPlayerIndex, AActor* a_pWorldCamera);
-
-	void SetPlayerMovementController(APlayerSpace* a_pPlayerSpace);
-
-	void BindPlayer(int a_iIndex);
-
-	void SignMyselfUpForMovement();
-
+	//Input functions
 	void KeyUp();
-	void KeyDown();
 	void KeyLeft();
 	void KeyRight();
-
 	void Attack();
 	void Special();
 
+	void SetControllerIndex(int a_iPlayerIndex, AActor* a_pWorldCamera);
+	void SetPlayerMovementController(APlayerSpace* a_pPlayerSpace);
+	void BindPlayer(int a_iIndex);
+	void SignMyselfUpForMovement();
 
 	void SetModelVisibleYoga();
 	void SetModelVisibleVader();
 
-	void SetDirection(bool a_bState);
+	void ResetToBottom();
+	void Respawn();
 
-	void OverLapFunction();
+	void SetDirection(bool a_bState);
 
 	bool GetAttackable() const;
 

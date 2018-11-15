@@ -4,6 +4,8 @@
 #include "Engine/Engine.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "ConstructorHelpers.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameDirector.h"
 
 
 // Sets default values
@@ -11,6 +13,8 @@ APlayerSpace::APlayerSpace()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	iP1BlockUnit = iP1StartX;
+	iP2BlockUnit = iP2StartX;
 
 	//Dark invader animations
 	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimIdleDark(TEXT("/Game/Animations/Anim_DarkInvader_Idle"));
@@ -80,6 +84,12 @@ void APlayerSpace::BeginPlay()
 		if (PlayerOne) { PlayerOne->SetDirection(true); }
 		if (PlayerTwo) { PlayerTwo->SetDirection(false); }
 	}
+
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(AActor::GetWorld(), AGameDirector::StaticClass(), FoundActors);
+	AGameDirector* GameDirector = dynamic_cast<AGameDirector*>(FoundActors[0]);
+	aa_pPlayer1Spawn = GameDirector->aa_pPlayer1Spawn;
+	aa_pPlayer2Spawn = GameDirector->aa_pPlayer2Spawn;
 }
 
 bool APlayerSpace::CheckMovement(int left, int right, int amount)
@@ -98,6 +108,32 @@ bool APlayerSpace::HitMySelf(ABaseCharacter* a_Player, bool a_RightDirectionPres
 	}
 	if (a_RightDirectionPressed) { return iP2BlockUnit > iP1LevelUnit; }
 	return iP2BlockUnit < iP1BlockUnit;
+}
+
+bool APlayerSpace::CheckForKillPosition(ABaseCharacter* a_Player)
+{
+	if (!a_Player) { return false;}
+	if (a_Player->GetActorLocation().Z < fBottomKillPosition) { return true; }
+	return false;
+}
+
+void APlayerSpace::ResetPlacement(ABaseCharacter* a_Player, FVector spawn)
+{
+	if (a_Player->GetPlayerNumber() == 1)
+	{
+		if (spawn == aa_pPlayer1Spawn->GetActorLocation())
+		{
+			iP1BlockUnit = iP1StartX;
+		} else { iP1BlockUnit = iP2StartX;}
+	}
+	else
+	{
+		if (spawn == aa_pPlayer1Spawn->GetActorLocation())
+		{
+			iP2BlockUnit = iP1StartX;
+		} else { iP2BlockUnit = iP2StartX;}
+	}
+	CheckWhoIsLeftRight();
 }
 
 
@@ -196,20 +232,16 @@ bool APlayerSpace::CheckMovePlayerHorizontal(ABaseCharacter* a_pPlayer, bool a_b
 			{
 				// Player 1 is on the left and moves right
 				return this->CheckMovement(iP1BlockUnit, iP2BlockUnit, a_iMovement);
-			} else
-			{
-				// Player 1 is on the right and moves left
-				return this->CheckMovement(iP1BlockUnit, iP2BlockUnit, -a_iMovement);
-			}
+			} 
+			// Player 1 is on the right and moves left
+			return this->CheckMovement(iP1BlockUnit, iP2BlockUnit, -a_iMovement);
 		}
 		if (a_bMoveRight)
 		{
 			// Player 2 is on the left and moves right
 			return CheckMovement(iP2BlockUnit, iP1BlockUnit, a_iMovement);
-		} else
-		{
-			return this->CheckMovement(iP2BlockUnit, iP1BlockUnit, -a_iMovement);
-		}
+		} 
+		return this->CheckMovement(iP2BlockUnit, iP1BlockUnit, -a_iMovement);
 		// Player 2 is on the right and moves left
 	}
 	return false;
@@ -229,7 +261,9 @@ void APlayerSpace::MovePlayerHorizontal(ABaseCharacter* a_pPlayer, bool a_bMoveR
 			if (a_bMoveRight) { iP2BlockUnit += a_iAmount; } else { iP2BlockUnit -= a_iAmount; }
 		}
 	}
+
 	CheckWhoIsLeftRight();
+	CheckBoundries(a_pPlayer);
 }
 
 void APlayerSpace::MovePlayerVertical(ABaseCharacter* a_pPlayer, bool a_bMoveUp)
@@ -282,6 +316,52 @@ void APlayerSpace::CheckWhoIsLeftRight()
 			if (PlayerTwo) { PlayerTwo->SetDirection(false); }
 		}
 	}
+}
+
+void APlayerSpace::CheckBoundries(ABaseCharacter* a_pPlayer)
+{
+	if (a_pPlayer)
+	{
+		if (a_pPlayer == PlayerOne)
+		{
+			if (iP1BlockUnit <= iBlockMinBoundry || iP1BlockUnit >= iBlockMaxBoundry) { a_pPlayer->SetFallingState();} 
+		} else
+		{
+			if (iP2BlockUnit <= iBlockMinBoundry || iP2BlockUnit >= iBlockMaxBoundry) { a_pPlayer->SetFallingState();} 
+		}
+	}
+}
+
+bool APlayerSpace::CheckIfOccupied(ABaseCharacter* a_pPlayer, FVector spawn)
+{
+	if (a_pPlayer->GetPlayerNumber() == 1)
+	{
+		if (iP1BlockUnit == iP2BlockUnit)
+		{
+			if (spawn == aa_pPlayer1Spawn->GetActorLocation())
+			{
+				iP1BlockUnit = iP2StartX;
+			} else { iP1BlockUnit = iP1StartX; }
+			return true;
+		}
+		return false;
+	}
+
+	if (iP2BlockUnit == iP1BlockUnit)
+	{
+		if (spawn == aa_pPlayer1Spawn->GetActorLocation())
+		{
+			iP2BlockUnit = iP2StartX;
+		} else { iP2BlockUnit = iP1StartX;}
+		return true;
+	}
+	return false;
+}
+
+FVector APlayerSpace::GetOtherSpawn(FVector spawn) const
+{
+	if (spawn == aa_pPlayer1Spawn->GetActorLocation()) { return aa_pPlayer2Spawn->GetActorLocation();}
+	return aa_pPlayer1Spawn->GetActorLocation();
 }
 
 int APlayerSpace::getP1Block()

@@ -16,12 +16,12 @@ public:
 	// Sets default values for this actor's properties
 	AGameDirector();
 
+	FVector RespawnThisPlayer(ABaseCharacter* a_character);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	void CreatePlayers();
-
 	int i_PlayerIndexCount = 0;
 public:	
 	// Called every frame

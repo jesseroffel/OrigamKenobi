@@ -25,13 +25,16 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CharactersToFollow")
 	TArray<ABaseCharacter*> aa_CharacterActors;
-
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CameraSettings")
+	float DistanceXMin = 200.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CameraSettings")
+	float DistanceXMax = 400.0f;
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	float fCharacterDistance = 0.0f;
 	float fCharacterMiddlePoint = 0.0f;
-	float fSmallest = 0.0f;
+	float fCharacterDistance = 0.0f;
 	USpringArmComponent* pSpringArm = nullptr;
 };

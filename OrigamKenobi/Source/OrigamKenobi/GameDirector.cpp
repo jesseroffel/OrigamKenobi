@@ -41,6 +41,7 @@ void AGameDirector::CreatePlayers()
 			ABaseCharacter* P1 = GetWorld()->SpawnActor<ABaseCharacter>(ABaseCharacter::StaticClass(), aa_pPlayer1Spawn->GetActorLocation(), FRotator::ZeroRotator, ActorSpawnParams);
 			if (P1)
 			{
+				aa_Characters.Emplace(P1);
 				P1->BindPlayer(0);
 				P1->SetControllerIndex(0, FoundActors[0]);
 				if (pPlayerSpace != nullptr)
@@ -60,6 +61,7 @@ void AGameDirector::CreatePlayers()
 			ABaseCharacter* P2 = GetWorld()->SpawnActor<ABaseCharacter>(ABaseCharacter::StaticClass(), aa_pPlayer2Spawn->GetActorLocation(), FRotator::ZeroRotator, ActorSpawnParams);
 			if (P2)
 			{
+				aa_Characters.Emplace(P2);
 				P2->BindPlayer(1);
 				P2->SetControllerIndex(1, FoundActors[0]);
 				if (pPlayerSpace != nullptr)
@@ -74,6 +76,31 @@ void AGameDirector::CreatePlayers()
 			else { UE_LOG(LogTemp, Warning, TEXT("Actor could not be spawned!")); }
 		}
 	} 
+}
+
+FVector AGameDirector::RespawnThisPlayer(ABaseCharacter* a_character)
+{
+	if (a_character && aa_Characters.Num() >= 2)
+	{
+		float spawnPoint1 = aa_pPlayer1Spawn->GetActorLocation().X;
+		float spawnPoint2 = aa_pPlayer2Spawn->GetActorLocation().X;
+		float P1 = aa_Characters[0]->GetActorLocation().X;
+		float P2 = aa_Characters[1]->GetActorLocation().X;
+		float Selected = 0.0f;
+		// Player One
+		if (a_character == aa_Characters[0])
+		{
+			if (P1 > spawnPoint1 && P1 > spawnPoint2 && P2 < spawnPoint1) { Selected = spawnPoint2; } else { Selected = spawnPoint1; }
+			if (P1 < spawnPoint1 && P1 < spawnPoint2 && P2 > spawnPoint1) { Selected = spawnPoint1; } else { Selected = spawnPoint2; }
+			if (Selected == spawnPoint1) { return aa_pPlayer1Spawn->GetActorLocation(); } 
+			return aa_pPlayer2Spawn->GetActorLocation();
+		}
+		if (P2 > spawnPoint1 && P2 > spawnPoint2 && P1 < spawnPoint1) { Selected = spawnPoint2; } else { Selected = spawnPoint1; }
+		if (P2 < spawnPoint1 && P2 < spawnPoint2 && P1 > spawnPoint1) { Selected = spawnPoint1; } else { Selected = spawnPoint2; }
+		if (Selected == spawnPoint1) { return aa_pPlayer1Spawn->GetActorLocation(); } 
+		return aa_pPlayer2Spawn->GetActorLocation();
+	}
+	return aa_pPlayer1Spawn->GetActorLocation();
 }
 
 // Called every frame

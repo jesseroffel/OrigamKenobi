@@ -37,16 +37,35 @@ public:
 	bool IsHitDirectionLeft(ABaseCharacter* a_CharacterWhoCalled = nullptr) const;
 	void PlayCharacterAnimation(ABaseCharacter* a_character = nullptr, EAnimationType animType = Idle) const;
 	bool HitMySelf(ABaseCharacter* a_Player = nullptr, bool a_RightDirectionPressed = false);
+	bool CheckForKillPosition(ABaseCharacter* a_Player = nullptr);
+	void ResetPlacement(ABaseCharacter* a_Player = nullptr, FVector spawn = FVector(0.0f));
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LevelBoundries")
+	int iBlockMinBoundry = -1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LevelBoundries")
+	int iBlockMaxBoundry = 16;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LevelBoundries")
+	int iP1StartX = 5;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LevelBoundries")
+	int iP2StartX = 11;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LevelBoundries")
+	float fBottomKillPosition = -200.0f;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	// 0=0 1=50 2=100 3=150 4=200 5=250 6=300 7=350 8=400 9=450 10=500 11=550 12=600 13=650 14=700 15=750
 	// 16 steps on board, -1 && 16 = death	0-15 range
-	int iP1BlockUnit = 5;	// X Axis
+	int iP1BlockUnit = 0;	// p1 X Axis
 	int iP1LevelUnit = 0;	// Y Axis
-	int iP2BlockUnit = 11;	// X Axis
+	int iP2BlockUnit = 0;	// p2 X Axis
 	int iP2LevelUnit = 0;	// Y Axis
+
+	AActor* aa_pPlayer1Spawn = nullptr;
+	AActor* aa_pPlayer2Spawn = nullptr;
 
 	bool bPlayerOneLeft = true;
 	bool bSwitched = false;
@@ -96,6 +115,12 @@ public:
 	bool CheckOtherPlayerSameLayer(ABaseCharacter* a_pPlayer, bool a_bRightDirection, int a_iAmount);
 
 	void CheckWhoIsLeftRight();
+
+	void CheckBoundries(ABaseCharacter* a_pPlayer = nullptr);
+
+	bool CheckIfOccupied(ABaseCharacter* a_pPlayer, FVector spawn);
+
+	FVector GetOtherSpawn(FVector spawn) const;
 
 	int getP1Block();
 	int getP2Block();
