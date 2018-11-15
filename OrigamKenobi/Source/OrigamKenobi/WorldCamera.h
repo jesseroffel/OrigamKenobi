@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "BaseCharacter.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "WorldCamera.generated.h"
 
 UCLASS()
@@ -22,11 +24,14 @@ protected:
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CharactersToFollow")
-		TArray<AActor*> aa_CharacterActors;
+	TArray<ABaseCharacter*> aa_CharacterActors;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	
-	
+private:
+	float fCharacterDistance = 0.0f;
+	float fCharacterMiddlePoint = 0.0f;
+	float fSmallest = 0.0f;
+	USpringArmComponent* pSpringArm = nullptr;
 };

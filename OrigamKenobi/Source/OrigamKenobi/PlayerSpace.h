@@ -67,6 +67,18 @@ protected:
 	UAnimationAsset* a_JumpBackwardDark = nullptr;
 	UAnimationAsset* a_SelfStabDark = nullptr;
 	UAnimationAsset* a_TakeDamageDark = nullptr;
+
+	//Master Yoga animations
+	UAnimationAsset* a_IdleYoga = nullptr;
+	UAnimationAsset* a_AttackYoga = nullptr;
+	UAnimationAsset* a_BlockYoga = nullptr;
+	UAnimationAsset* a_JumpYoga = nullptr;
+	UAnimationAsset* a_MoveForwardYoga = nullptr;
+	UAnimationAsset* a_MoveBackwardYoga = nullptr;
+	UAnimationAsset* a_JumpForwardYoga = nullptr;
+	UAnimationAsset* a_JumpBackwardYoga = nullptr;
+	UAnimationAsset* a_SelfStabYoga = nullptr;
+	UAnimationAsset* a_TakeDamageYoga = nullptr;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

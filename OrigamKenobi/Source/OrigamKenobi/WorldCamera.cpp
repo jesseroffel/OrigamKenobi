@@ -3,7 +3,6 @@
 #include "WorldCamera.h"
 #include "Components/SphereComponent.h"
 #include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "Engine/Engine.h"
 
 // Sets default values
@@ -18,6 +17,7 @@ AWorldCamera::AWorldCamera()
 
 	//Create Springarm
 	USpringArmComponent* SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraAttachmentArm"));
+	pSpringArm = SpringArm;
 	SpringArm->SetupAttachment(RootComponent);
 	//SpringArm->RelativeRotation = FRotator(0.f, -10.0f, 90.f);
 	SpringArm->TargetArmLength = 100.0f;
@@ -33,13 +33,30 @@ AWorldCamera::AWorldCamera()
 void AWorldCamera::BeginPlay()
 {
 	Super::BeginPlay();
-	//if (aa_CharacterActors.Num() <= 1) { GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ADD All CharacterActors!!!")); }
 }
 
 // Called every frame
 void AWorldCamera::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	const int32 CharacterAmount = aa_CharacterActors.Num();
+	if (CharacterAmount == 2)
+	{
+		const FVector p1 = aa_CharacterActors[0]->GetActorLocation();
+		const FVector p2 = aa_CharacterActors[1]->GetActorLocation();
+		if (p1.X < p2.X)
+		{
+			fCharacterMiddlePoint = (p2.X + p1.X) / 2;
+		}
+		else
+		{
+			fSmallest = p1.X;
+			fCharacterMiddlePoint = (p1.X + p2.X) / 2;
+		}
+		//fCharacterDistance = p1.X * p1.X + p2.X * p2.X;
+		FVector curDis = this->GetActorLocation();
+		RootComponent->SetWorldLocation(FVector(fCharacterMiddlePoint, curDis.Y, curDis.Z));
+	}
+	
 }
 

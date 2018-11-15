@@ -13,7 +13,6 @@ APlayerSpace::APlayerSpace()
 	PrimaryActorTick.bCanEverTick = true;
 
 	//Dark invader animations
-	
 	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimIdleDark(TEXT("/Game/Animations/Anim_DarkInvader_Idle"));
 	if (AU_AnimIdleDark.Succeeded()) { a_IdleDark = AU_AnimIdleDark.Object; }
 	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimAttackDark(TEXT("/Game/Animations/Anim_DarkInvader_Attack"));
@@ -38,13 +37,39 @@ APlayerSpace::APlayerSpace()
 	if (AU_AnimSelfStabDark.Succeeded()) { a_SelfStabDark = AU_AnimSelfStabDark.Object; }
 	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimTakeDamageDark(TEXT("/Game/Animations/Anim_DarkInvader_TakeDamage"));
 	if (AU_AnimTakeDamageDark.Succeeded()) { a_TakeDamageDark = AU_AnimTakeDamageDark.Object; }
+
+	//Master Yoga animations
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimIdleYoga(TEXT("/Game/Animations/Anim_MasterYoga_Idle"));
+	if (AU_AnimIdleYoga.Succeeded()) { a_IdleYoga = AU_AnimIdleYoga.Object; }
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimAttackYoga(TEXT("/Game/Animations/Anim_MasterYoga_Attack"));
+	if (AU_AnimAttackYoga.Succeeded()) { a_AttackYoga = AU_AnimAttackYoga.Object; }
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimBlockYoga(TEXT("/Game/Animations/Anim_MasterYoga_Block"));
+	if (AU_AnimBlockYoga.Succeeded()) { a_BlockYoga = AU_AnimBlockYoga.Object; }
+
+
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimMoveForwardYoga(TEXT("/Game/Animations/Anim_MasterYoga_MoveForward"));
+	if (AU_AnimMoveForwardYoga.Succeeded()) { a_MoveForwardYoga = AU_AnimMoveForwardYoga.Object; }
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimMoveBackwardYoga(TEXT("/Game/Animations/Anim_MasterYoga_MoveBackward"));
+	if (AU_AnimMoveBackwardYoga.Succeeded()) { a_MoveBackwardYoga = AU_AnimMoveBackwardYoga.Object; }
+
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimJumpYoga(TEXT("/Game/Animations/Anim_MasterYoga_Jump"));
+	if (AU_AnimJumpYoga.Succeeded()) { a_JumpYoga = AU_AnimJumpYoga.Object; }
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimJumpForwardYoga(TEXT("/Game/Animations/Anim_MasterYoga_JumpForward"));
+	if (AU_AnimJumpForwardYoga.Succeeded()) { a_JumpForwardYoga = AU_AnimJumpForwardYoga.Object; }
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimJumpBackwardYoga(TEXT("/Game/Animations/Anim_MasterYoga_JumpBackward"));
+	if (AU_AnimJumpBackwardYoga.Succeeded()) { a_JumpBackwardYoga = AU_AnimJumpBackwardYoga.Object; }
+
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimSelfStabYoga(TEXT("/Game/Animations/Anim_MasterYoga_SelfStab"));
+	if (AU_AnimSelfStabYoga.Succeeded()) { a_SelfStabYoga = AU_AnimSelfStabYoga.Object; }
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> AU_AnimTakeDamageYoga(TEXT("/Game/Animations/Anim_MasterYoga_TakeDamage"));
+	if (AU_AnimTakeDamageYoga.Succeeded()) { a_TakeDamageYoga = AU_AnimTakeDamageYoga.Object; }
 }
 
 // Called when the game starts or when spawned
 void APlayerSpace::BeginPlay()
 {
 	Super::BeginPlay();
-	bPlayerOneLeft = iP1BlockUnit < iP2BlockUnit ? true : false;
+	bPlayerOneLeft = iP1BlockUnit < iP2BlockUnit;
 	if (bPlayerOneLeft)
 	{
 		if (PlayerOne) { PlayerOne->SetDirection(false); }
@@ -94,33 +119,43 @@ void APlayerSpace::PlayCharacterAnimation(ABaseCharacter* a_character, EAnimatio
 		{
 			case Attack:
 				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_AttackDark, false); }
+				if (Type == YogaMaster) { a_character->GetSkeletalMeshYoga()->PlayAnimation(a_AttackYoga, false); }
 				break;
 			case Block:
 				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_BlockDark, false); }
+				if (Type == YogaMaster) { a_character->GetSkeletalMeshYoga()->PlayAnimation(a_BlockYoga, false); }
 				break;
 			case Jump:
 				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_JumpDark, false); }
+				if (Type == YogaMaster) { a_character->GetSkeletalMeshYoga()->PlayAnimation(a_JumpYoga, false); }
 				break;
 			case MoveForward:
 				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_MoveForwardDark, false); }
+				if (Type == YogaMaster) { a_character->GetSkeletalMeshYoga()->PlayAnimation(a_MoveForwardYoga, false); }
 				break;
 			case MoveBackward:
 				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_MoveBackwardDark, false); }
+				if (Type == YogaMaster) { a_character->GetSkeletalMeshYoga()->PlayAnimation(a_MoveBackwardYoga, false); }
 				break;
 			case JumpForward:
 				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_JumpForwardDark, false); }
+				if (Type == YogaMaster) { a_character->GetSkeletalMeshYoga()->PlayAnimation(a_JumpForwardYoga, false); }
 				break;
 			case JumpBackWard:
 				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_JumpBackwardDark, false); }
+				if (Type == YogaMaster) { a_character->GetSkeletalMeshYoga()->PlayAnimation(a_JumpBackwardYoga, false); }
 				break;
 			case SelfStab:
 				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_SelfStabDark, false); }
+				if (Type == YogaMaster) { a_character->GetSkeletalMeshYoga()->PlayAnimation(a_SelfStabYoga, false); }
 				break;
 			case EAnimationType::TakeDamage:
 				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_TakeDamageDark, false); }
+				if (Type == YogaMaster) { a_character->GetSkeletalMeshYoga()->PlayAnimation(a_TakeDamageYoga, false); }
 				break;
 			case Idle:
 				if (Type == DarkInvader) { a_character->GetSkeletalMeshDark()->PlayAnimation(a_IdleDark, false); }
+				if (Type == YogaMaster) { a_character->GetSkeletalMeshYoga()->PlayAnimation(a_IdleYoga, false); }
 				break;
 			default: 
 				break;

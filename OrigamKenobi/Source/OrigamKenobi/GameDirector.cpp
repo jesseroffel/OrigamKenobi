@@ -5,7 +5,6 @@
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "WorldCamera.h"
-#include "CharacterController.h"
 
 
 // Sets default values
@@ -35,7 +34,8 @@ void AGameDirector::CreatePlayers()
 
 		TArray<AActor*> FoundActors;
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWorldCamera::StaticClass(), FoundActors);
-		if (FoundActors.Num() > 0)
+		AWorldCamera* camera = dynamic_cast<AWorldCamera*>(FoundActors[0]);
+		if (FoundActors.Num() > 0 && FoundActors[0])
 		{
 			//Player 1
 			ABaseCharacter* P1 = GetWorld()->SpawnActor<ABaseCharacter>(ABaseCharacter::StaticClass(), aa_pPlayer1Spawn->GetActorLocation(), FRotator::ZeroRotator, ActorSpawnParams);
@@ -50,6 +50,7 @@ void AGameDirector::CreatePlayers()
 				}
 				//P1->SetModelVisibleVader();
 				P1->SetModelVisibleYoga();
+				camera->aa_CharacterActors.Emplace(P1);
 			}
 			else { UE_LOG(LogTemp, Warning, TEXT("Actor could not be spawned!")); }
 			//Player 2
@@ -68,6 +69,7 @@ void AGameDirector::CreatePlayers()
 				}
 				//P2->SetModelVisibleYoga();
 				P2->SetModelVisibleVader();
+				camera->aa_CharacterActors.Emplace(P2);
 			}
 			else { UE_LOG(LogTemp, Warning, TEXT("Actor could not be spawned!")); }
 		}

@@ -65,6 +65,7 @@ ABaseCharacter::ABaseCharacter()
 	}
 
 	PrimaryActorTick.bCanEverTick = true;
+	
 }
 
 
@@ -186,6 +187,7 @@ void ABaseCharacter::Tick(float DeltaTime)
 	CheckPlayerJump();
 	CheckPlayerAttacking(fWorldTime);
 	CheckPlayerBlocking(fWorldTime);
+	
 
 	if (bStunned)
 	{

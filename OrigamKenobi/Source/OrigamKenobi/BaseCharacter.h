@@ -31,7 +31,8 @@ public:
 		void OnSwordBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 
 	ECharacterType GetCharacterType() const { return CharacterType; }
-	USkeletalMeshComponent* GetSkeletalMeshDark() const { return SK_DarkInvader;}
+	USkeletalMeshComponent* GetSkeletalMeshDark() const { return SK_DarkInvader; }
+	USkeletalMeshComponent* GetSkeletalMeshYoga() const { return SK_YogaMaster; }
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
