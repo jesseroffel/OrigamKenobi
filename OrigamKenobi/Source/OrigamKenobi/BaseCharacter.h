@@ -45,6 +45,8 @@ public:
 	void ControlledMoveDirection(bool a_bLeftDirection = true, int a_iAmount = 1);
 	void DisableTheInput();
 	void EnableTheInput();
+	bool GetCanFall() const { return bCanFall;}
+	void SetCanFall(bool state) { bCanFall = state;}
 protected:
 	// Called when the game starts or when spawned
 	void BeginPlay() override;
@@ -71,6 +73,7 @@ protected:
 	float fSpecialHitPerson = 0.0f;
 	float fSpecialPunishTimer = 0.0f;
 	float fSpecialTimeToPunish = 5.0f;
+	bool bCanFall = false;
 
 
 	bool bMovementLocked = false;

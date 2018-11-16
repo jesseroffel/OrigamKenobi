@@ -173,6 +173,16 @@ void ABaseCharacter::DisableTheInput()
 	bMovementLocked = true;
 	bVerticalLocked = true;
 	bHorizontalLocked = true;
+	bCanFall = false;
+
+	//Move character up
+	vCharacterLocation = this->GetActorLocation();
+	pPlayerSpace->MovePlayerVertical(this, true);
+	vGoingLocation = vCharacterLocation;
+	vGoingLocation.Z += VerticalMovement;
+	FLatentActionInfo LatentInfo;
+	LatentInfo.CallbackTarget = this;
+	UKismetSystemLibrary::MoveComponentTo(RootComponent, vGoingLocation, this->GetActorRotation(), false, true, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
 }
 
 void ABaseCharacter::EnableTheInput()
@@ -180,6 +190,16 @@ void ABaseCharacter::EnableTheInput()
 	bMovementLocked = false;
 	bVerticalLocked = false;
 	bHorizontalLocked = false;
+	bCanFall = true;
+
+	//Move character down
+	vCharacterLocation = this->GetActorLocation();
+	pPlayerSpace->MovePlayerVertical(this, false);
+	vGoingLocation = vCharacterLocation;
+	vGoingLocation.Z -= VerticalMovement;
+	FLatentActionInfo LatentInfo;
+	LatentInfo.CallbackTarget = this;
+	UKismetSystemLibrary::MoveComponentTo(RootComponent, vGoingLocation, this->GetActorRotation(), false, true, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
 }
 
 // Called when the game starts or when spawned
@@ -702,7 +722,7 @@ void ABaseCharacter::ActivateSpecial()
 	bCheckSpecialTimer = true;
 
 	SpecialHitBox->bGenerateOverlapEvents = true;
-	SpecialHitBox->SetHiddenInGame(false);
+	//SpecialHitBox->SetHiddenInGame(false);
 	SpecialHitBox->SetBoxExtent(FVector(42.05f, 72.05f, 8.05f));
 
 	bMovementLocked = true;
@@ -713,7 +733,7 @@ void ABaseCharacter::ActivateSpecial()
 void ABaseCharacter::DisableSpecial()
 {
 	SpecialHitBox->bGenerateOverlapEvents = false;
-	SpecialHitBox->SetHiddenInGame(true);
+	//SpecialHitBox->SetHiddenInGame(true);
 	SpecialHitBox->SetBoxExtent(FVector(42.00f, 72.00f, 8.00f));
 }
 

@@ -27,7 +27,7 @@ public:
 	TArray<ABaseCharacter*> aa_CharacterActors;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CameraSettings")
-	float DistanceXMin = 200.0f;
+	float DistanceXMin = 175.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CameraSettings")
 	float DistanceXMax = 400.0f;
 	// Called every frame

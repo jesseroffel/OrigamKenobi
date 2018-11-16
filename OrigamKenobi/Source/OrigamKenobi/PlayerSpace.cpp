@@ -324,10 +324,11 @@ void APlayerSpace::CheckBoundries(ABaseCharacter* a_pPlayer)
 	{
 		if (a_pPlayer == PlayerOne)
 		{
-			if (iP1BlockUnit <= iBlockMinBoundry || iP1BlockUnit >= iBlockMaxBoundry) { a_pPlayer->SetFallingState();} 
+			if (a_pPlayer->GetCanFall()) { if (iP1BlockUnit <= iBlockMinBoundry || iP1BlockUnit >= iBlockMaxBoundry) { a_pPlayer->SetFallingState();} }
+			
 		} else
 		{
-			if (iP2BlockUnit <= iBlockMinBoundry || iP2BlockUnit >= iBlockMaxBoundry) { a_pPlayer->SetFallingState();} 
+			if (a_pPlayer->GetCanFall()) { if (iP2BlockUnit <= iBlockMinBoundry || iP2BlockUnit >= iBlockMaxBoundry) { a_pPlayer->SetFallingState();} }
 		}
 	}
 }
