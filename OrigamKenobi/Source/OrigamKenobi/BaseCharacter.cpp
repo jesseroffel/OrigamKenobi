@@ -45,9 +45,8 @@ ABaseCharacter::ABaseCharacter()
 
 	SpecialHitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SpecialHitBox"));
 	SpecialHitBox->SetupAttachment(RootComponent);
-	SpecialHitBox->SetBoxExtent(FVector(16.0f, 48.0f, 8.0f));
-	SpecialHitBox->SetRelativeLocation(FVector(32.0f, 48.0f, 0.0f));
-	SpecialHitBox->SetRelativeRotation(FRotator(0.0f, -47.5f, 0.0f));
+	SpecialHitBox->SetBoxExtent(FVector(42.0f, 72.0f, 8.0f));
+	SpecialHitBox->SetRelativeLocation(FVector(0.0f, 20.0f, 0.0f));
 	SpecialHitBox->OnComponentBeginOverlap.AddDynamic(this, &ABaseCharacter::OnSpecialBeginOverlap);
 	SpecialHitBox->bGenerateOverlapEvents = false;
 	SpecialHitBox->BodyInstance.SetCollisionProfileName("OverlapAll");
@@ -90,7 +89,7 @@ void ABaseCharacter::OnSwordBeginOverlap(UPrimitiveComponent* OverlappedComponen
 			{ OtherCharacter->AttackHitMe(true); }
 			else { OtherCharacter->AttackHitMe(false); }
 			bSuccessfulHit = true;
-			AddSpecialPoints(5);
+			AddSpecialPoints(10);
 		} else
 		{
 			if (OtherComp->GetName() == "CharacterHitbox" && !OtherCharacter->GetAttackable())
@@ -115,6 +114,8 @@ void ABaseCharacter::OnSpecialBeginOverlap(UPrimitiveComponent* OverlappedCompon
 		{
 			const FString text = OtherCharacter->GetCharacterName() + " got hit by " + CharacterName;
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
+			bSpecialHitOther = true;
+			pGameDirector->DisableControlsOther(this);
 		}
 	}
 }
@@ -128,11 +129,68 @@ void ABaseCharacter::SetFallingState()
 	pPlayerSpace->MovePlayerVertical(this, false);
 }
 
+void ABaseCharacter::ControlledMoveDirection(bool a_bLeftDirection, int a_iAmount)
+{
+	if (a_bLeftDirection)
+	{
+		const bool checkLeft = pPlayerSpace->CheckMovePlayerHorizontal(this, false);
+		if (checkLeft)
+		{
+			pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::Jump);
+
+			pPlayerSpace->MovePlayerHorizontal(this, false, 1);
+			vCharacterLocation = this->GetActorLocation();
+			vGoingLocation = vCharacterLocation;
+			vGoingLocation.X -= HorizontalMovement;
+
+			FLatentActionInfo LatentInfo;
+			LatentInfo.CallbackTarget = this;
+			UKismetSystemLibrary::MoveComponentTo(RootComponent, vGoingLocation, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
+		}
+	}
+	else
+	{
+		const bool checkRight = pPlayerSpace->CheckMovePlayerHorizontal(this, true);
+		if (checkRight)
+		{
+			pPlayerSpace->PlayCharacterAnimation(this, EAnimationType::Jump);
+
+			pPlayerSpace->MovePlayerHorizontal(this, true, 1);
+			vCharacterLocation = this->GetActorLocation();
+			vGoingLocation = vCharacterLocation;
+			vGoingLocation.X += HorizontalMovement;
+
+			FLatentActionInfo LatentInfo;
+			LatentInfo.CallbackTarget = this;
+			UKismetSystemLibrary::MoveComponentTo(RootComponent, vGoingLocation, this->GetActorRotation(), false, false, 0.10, false, EMoveComponentAction::Type::Move, LatentInfo);
+		}
+	}
+	
+}
+
+void ABaseCharacter::DisableTheInput()
+{
+	bMovementLocked = true;
+	bVerticalLocked = true;
+	bHorizontalLocked = true;
+}
+
+void ABaseCharacter::EnableTheInput()
+{
+	bMovementLocked = false;
+	bVerticalLocked = false;
+	bHorizontalLocked = false;
+}
+
 // Called when the game starts or when spawned
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	fSpecialAddWait = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 5.0f;
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGameDirector::StaticClass(), FoundActors);
+	AGameDirector* Director = dynamic_cast<AGameDirector*>(FoundActors[0]);
+	pGameDirector = Director;
 }
 
 // Called to bind functionality to input
@@ -227,8 +285,64 @@ void ABaseCharacter::Tick(float DeltaTime)
 		{
 			if (iSpecial == 100)
 			{
-				bSpecialActivated = true;
 				ActivateSpecial();
+			}
+		}
+	}
+	//If Activated, check for hit, if so, control
+	if (bSpecialActivated)
+	{
+		//if check for timer
+		if (fWorldTime < fSpecialHitPerson && bCheckSpecialTimer)
+		{
+			if (bSpecialHitOther)
+			{
+				const FString text = CharacterName + " Control Hit Other";
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
+				DisableSpecial();
+				bCheckSpecialTimer = false;
+				bMovementLocked = true;
+				bVerticalLocked = true;
+				bHorizontalLocked = true;
+				fSpecialPunishTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 5.0f;
+			}
+		}
+		if (fWorldTime > fSpecialHitPerson && bCheckSpecialTimer)
+		{	//Timer passed, no one hit, get locked
+			const FString text = CharacterName + " Control Stun Activate";
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
+			bStunned = true;
+			fStunTimer = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 2.5f;
+			bMovementLocked = true;
+			bVerticalLocked = true;
+			bHorizontalLocked = true;
+			bSpecialActivated = false;
+			bCheckSpecialTimer = false;
+			DisableSpecial();
+		}
+		if (bSpecialHitOther && !bCheckSpecialTimer)
+		{
+			//Control other until fSpecialPunishTimer is passed
+			if (fWorldTime < fSpecialPunishTimer)
+			{
+				if (bDirectionPressed)
+				{
+					if (bRightDirectionPressed) { ControlOtherRight(); }
+					else { ControlOtherLeft(); }
+				}
+			}
+			else
+			{
+				//Disable special after controlling
+				pGameDirector->EnableControlsOther(this);
+				bSpecialActivated = false;
+				bMovementLocked = false;
+				bVerticalLocked = false;
+				bHorizontalLocked = false;
+				bSpecialHitOther = false;
+				bCheckSpecialTimer = false;
+				const FString text = CharacterName + " Control time over";
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
 			}
 		}
 	}
@@ -254,7 +368,6 @@ void ABaseCharacter::Tick(float DeltaTime)
 	CheckPlayerJump();
 	CheckPlayerAttacking(fWorldTime);
 	CheckPlayerBlocking(fWorldTime);
-	
 
 	if (bStunned)
 	{
@@ -334,11 +447,7 @@ void ABaseCharacter::ResetToBottom()
 
 void ABaseCharacter::Respawn()
 {
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGameDirector::StaticClass(), FoundActors);
-	AGameDirector* Director = dynamic_cast<AGameDirector*>(FoundActors[0]);
-
-	FVector location = Director->RespawnThisPlayer(this);
+	FVector location = pGameDirector->RespawnThisPlayer(this);
 	pPlayerSpace->ResetPlacement(this, location);
 	if (pPlayerSpace->CheckIfOccupied(this, location))
 	{
@@ -413,7 +522,7 @@ void ABaseCharacter::MoveLeft()
 {
 	if (!bMovementLocked && !bHorizontalLocked)
 	{
-		bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, false, 1);
+		const bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, false, 1);
 		if (check)
 		{
 			//use HitMyself function to check direction... lazy...
@@ -449,7 +558,7 @@ void ABaseCharacter::MoveRight()
 {
 	if (!bMovementLocked && !bHorizontalLocked)
 	{
-		bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, true);
+		const bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, true);
 		if (check)
 		{
 			//use HitMyself function to check direction... lazy...
@@ -571,6 +680,7 @@ void ABaseCharacter::RemoveStun()
 	bMoving = false;
 	bMovementLocked = false;
 	bVerticalLocked = false;
+	bHorizontalLocked = false;
 	vCharacterLocation = this->GetActorLocation();
 }
 
@@ -585,17 +695,41 @@ void ABaseCharacter::AddSpecialPoints(int a_iAmount)
 
 void ABaseCharacter::ActivateSpecial()
 {
+	bSpecialActivated = true;
 	iSpecial = 0;
 	fSpecialAddWait = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 10.0f;
-	SpecialHitBox->SetBoxExtent(FVector(16.0f, 48.1f, 8.0f));
+	fSpecialHitPerson = UGameplayStatics::GetRealTimeSeconds(GetWorld()) + 0.25f;
+	bCheckSpecialTimer = true;
+
 	SpecialHitBox->bGenerateOverlapEvents = true;
 	SpecialHitBox->SetHiddenInGame(false);
+	SpecialHitBox->SetBoxExtent(FVector(42.05f, 72.05f, 8.05f));
+
+	bMovementLocked = true;
+	bHorizontalLocked = true;
+	bVerticalLocked = true;
 }
 
 void ABaseCharacter::DisableSpecial()
 {
 	SpecialHitBox->bGenerateOverlapEvents = false;
 	SpecialHitBox->SetHiddenInGame(true);
+	SpecialHitBox->SetBoxExtent(FVector(42.00f, 72.00f, 8.00f));
+}
+
+void ABaseCharacter::ControlOtherLeft()
+{
+	const FString text = CharacterName + " controlled to the left";
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
+
+	pGameDirector->SpecialControlOtherDirection(this, true);
+}
+
+void ABaseCharacter::ControlOtherRight()
+{
+	const FString text = CharacterName + " controlled to the right";
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, text);
+	pGameDirector->SpecialControlOtherDirection(this, false);
 }
 
 void ABaseCharacter::CheckPlayerMove()
@@ -621,7 +755,7 @@ void ABaseCharacter::CheckPlayerJump()
 		{
 			if (bJumpingPressed)
 			{
-				bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, bJumpDirection, 2);
+				const bool check = pPlayerSpace->CheckMovePlayerHorizontal(this, bJumpDirection, 2);
 				if (check)
 				{
 					//use HitMyself function to check direction... lazy...

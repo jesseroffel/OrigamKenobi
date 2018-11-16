@@ -17,6 +17,9 @@ public:
 	AGameDirector();
 
 	FVector RespawnThisPlayer(ABaseCharacter* a_character);
+	void SpecialControlOtherDirection(ABaseCharacter* a_pCaster = nullptr, bool a_bLeftDirection = true);
+	void DisableControlsOther(ABaseCharacter* a_pCaster = nullptr);
+	void EnableControlsOther(ABaseCharacter* a_pCaster = nullptr);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

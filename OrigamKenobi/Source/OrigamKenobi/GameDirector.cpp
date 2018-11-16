@@ -103,6 +103,33 @@ FVector AGameDirector::RespawnThisPlayer(ABaseCharacter* a_character)
 	return aa_pPlayer1Spawn->GetActorLocation();
 }
 
+void AGameDirector::SpecialControlOtherDirection(ABaseCharacter* a_pCaster, bool a_bLeftDirection)
+{
+	if (a_pCaster)
+	{
+		if (a_pCaster == aa_Characters[0]) { aa_Characters[1]->ControlledMoveDirection(a_bLeftDirection, 1);} 
+		else { aa_Characters[0]->ControlledMoveDirection(a_bLeftDirection, 1);}
+	}
+}
+
+void AGameDirector::DisableControlsOther(ABaseCharacter* a_pCaster)
+{
+	if (a_pCaster)
+	{
+		if (a_pCaster == aa_Characters[0]) { aa_Characters[1]->DisableTheInput();} 
+		else { aa_Characters[0]->DisableTheInput();}
+	}
+}
+
+void AGameDirector::EnableControlsOther(ABaseCharacter* a_pCaster)
+{
+	if (a_pCaster)
+	{
+		if (a_pCaster == aa_Characters[0]) { aa_Characters[1]->EnableTheInput();} 
+		else { aa_Characters[0]->EnableTheInput();}
+	}
+}
+
 // Called every frame
 void AGameDirector::Tick(float DeltaTime)
 {

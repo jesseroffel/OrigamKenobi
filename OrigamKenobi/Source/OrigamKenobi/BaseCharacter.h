@@ -16,6 +16,7 @@ enum ECharacterType
 };
 
 class APlayerSpace;
+class AGameDirector;
 
 UCLASS()
 class ORIGAMKENOBI_API ABaseCharacter : public APawn
@@ -41,6 +42,9 @@ public:
 	int GetHealth() { return iHealth; }
 	int GetSpecial() { return iSpecial; }
 	FString GetCharacterName() const { return CharacterName; }
+	void ControlledMoveDirection(bool a_bLeftDirection = true, int a_iAmount = 1);
+	void DisableTheInput();
+	void EnableTheInput();
 protected:
 	// Called when the game starts or when spawned
 	void BeginPlay() override;
@@ -51,6 +55,7 @@ protected:
 	bool bSelfHit = false;
 
 	APlayerSpace* pPlayerSpace = nullptr;
+	AGameDirector* pGameDirector = nullptr;
 	ECharacterType CharacterType = UNSET;
 	int iPlayerNumber = 0;
 
@@ -61,6 +66,9 @@ protected:
 	float fSpecialAddWait = 1.0f;
 	bool bSpecialPressed = false;
 	bool bSpecialActivated = false;
+	bool bSpecialHitOther = false;
+	bool bCheckSpecialTimer = false;
+	float fSpecialHitPerson = 0.0f;
 	float fSpecialPunishTimer = 0.0f;
 	float fSpecialTimeToPunish = 5.0f;
 
@@ -173,4 +181,7 @@ public:
 
 	void ActivateSpecial();
 	void DisableSpecial();
+
+	void ControlOtherLeft();
+	void ControlOtherRight();
 };

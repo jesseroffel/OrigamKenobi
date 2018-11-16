@@ -24,7 +24,7 @@ AWorldCamera::AWorldCamera()
 	//SpringArm->RelativeRotation = FRotator(0.f, -10.0f, 90.f);
 	SpringArm->TargetArmLength = 125.0f;
 	SpringArm->bEnableCameraLag = true;
-	SpringArm->CameraLagSpeed = 1.0f;
+	SpringArm->CameraLagSpeed = 5.0f;
 	SpringArm->bDoCollisionTest = false;
 	SpringArm->bIsCameraFixed = false;
 
